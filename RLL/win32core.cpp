@@ -558,8 +558,8 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	//gb->CubicTo({ -250,150 }, { 50,150 }, { -200,50 });
 	//gb->End(false); //bug test end
 
-	//go_geo = gb->Stroke(5, nullptr, &Matrix4x4::Scaling({ 1.f / 200, 1.f / 200, 1 }));
-	go_geo = gb->Stroke(5, nullptr);
+	go_geo = gb->Stroke(5, nullptr, &Matrix4x4::Scaling({ 1/200.f, 1/200.f, 1 }));
+	//go_geo = gb->Stroke(5, nullptr);
 	//go_geo = gb->Fill(&Matrix4x4::Scaling({ 1.f / 200, 1.f / 200, 1 }));
 	sb->Push(go_geo, br_yg_tex, &(Matrix4x4::Translation({ -180,-150 })));
 

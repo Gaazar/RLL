@@ -19,7 +19,7 @@ struct D3D12GPUCurve {
 	Math3D::Vector2 end;
 	bool IsLine()
 	{
-		return Math3D::Vector2::Cross(control - begin,end - control) == 0.f;
+		return Math3D::Vector2::Cross(control - begin, end - control) == 0.f;
 	}
 	bool IsVertical()
 	{
@@ -37,7 +37,7 @@ struct D3D12GPUCurve {
 	Math3D::Vector2 Max()
 	{
 		Math3D::Vector2 mx = begin;
-		mx.x = max(mx.x,control.x);
+		mx.x = max(mx.x, control.x);
 		mx.x = max(mx.x, end.x);
 
 		mx.y = max(mx.y, control.y);
@@ -186,8 +186,9 @@ struct D3D12GeometryMesh
 {
 	std::vector<short> indices;
 	std::vector<Math3D::Vector2> verts;
-	//std::vector<Math3D::Vector2> uv;
+	std::vector<Math3D::Vector2> uv;
 	std::vector<Math3D::Vector2> path_norm;
+	Math3D::Matrix4x4 uvTransform = Math3D::Matrix4x4::Identity();
 	void MakeIndex(int off = 0)
 	{
 		std::vector<short> idcs;
@@ -260,12 +261,13 @@ struct D3D12GeometryMesh
 	}
 	void MakeUV(Math3D::Matrix4x4& t)
 	{
-		//uv.reserve(verts.size());
-		//for (auto& i : verts)
-		//{
-		//	//auto u = i * t;
-		//	uv.push_back(i);
-		//}
+		uvTransform = t;
+		uv.reserve(verts.size());
+		for (auto& i : verts)
+		{
+			//auto u = i * t;
+			uv.push_back(i * t);
+		}
 	}
 	float GetArea() { return 0; };
 	float GetCircumference() { return 0; };
@@ -403,8 +405,8 @@ public:
 	void Triangle(Math3D::Vector2 p0, Math3D::Vector2 p1, Math3D::Vector2 p2, bool inv);
 	void RoundRectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, Math3D::Vector2 radius, bool inv);
 
-	RLL::IGeometry* Fill();
-	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type);
+	RLL::IGeometry* Fill(Math3D::Matrix4x4* bgTransform);
+	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type, Math3D::Matrix4x4* bgTransform);
 	void Reset();
 	void Dispose();
 

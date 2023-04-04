@@ -710,7 +710,7 @@ void D3D12GeometryBuilder::ArcTo(Math3D::Vector2 center, Math3D::Vector2 radius,
 	}
 }
 
-IGeometry* D3D12GeometryBuilder::Fill()
+IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* bgTransform)
 {
 	if (opening)
 	{
@@ -733,6 +733,9 @@ IGeometry* D3D12GeometryBuilder::Fill()
 	PathBuffer* buffer = &device->paths;
 	vector<D3D12GPUCurve> hBand;
 	vector<D3D12GPUCurve> vBand;
+	auto tf = Matrix4x4::Identity();
+	if (bgTransform)
+		tf = *bgTransform;
 
 	for (auto& i : paths)
 	{
@@ -760,26 +763,27 @@ IGeometry* D3D12GeometryBuilder::Fill()
 	for (auto& c : hBand)
 	{
 		D3D12GPUCurve fc;
-		fc.begin = c.begin;
-		fc.control = c.control;
-		fc.end = c.end;
+		fc.begin = c.begin * tf;
+		fc.control = c.control * tf;
+		fc.end = c.end * tf;
 		buffer->curves.push_back(fc);
 	}
 	for (auto& c : vBand)
 	{
 		D3D12GPUCurve fc;
-		fc.begin = c.begin;
-		fc.control = c.control;
-		fc.end = c.end;
+		fc.begin = c.begin * tf;
+		fc.control = c.control * tf;
+		fc.end = c.end * tf;
 		buffer->curves.push_back(fc);
 	}
 
 	D3D12GeometryMesh& cvx = *ifGeom->mesh;
+
 	convexHull(points, cvx.verts);
 	simplifyConvex(cvx.verts, 6);
 	cvx.MakeIndex();
 	cvx.MakeNormal();
-	//cvx.MakeUV();
+	cvx.MakeUV(tf);
 	cvx.SetPath(ifGeom->pathID);
 	return ifGeom;
 }
@@ -825,7 +829,7 @@ void StrokeQBezier(IGeometryBuilder* bd, D3D12GPUCurve& i, float hfstroke)
 	}
 
 }
-RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* type)
+RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* type, Math3D::Matrix4x4* bgTransform)
 {
 	//return nullptr;
 	if (type == nullptr)
@@ -1185,7 +1189,7 @@ RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* typ
 	}
 
 
-	auto res = bd->Fill();
+	auto res = bd->Fill(bgTransform);
 	bd->Release();
 	return res;
 };
@@ -1269,25 +1273,35 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 		{
 		case Layer::TYPE::TYPE_GEOMETRY:
 		{
-			auto uvMat = i.transform.Inversed();
 			//uvMat._41 = i.transform._41;
 			//uvMat._42 = i.transform._42;
 			D3D12GeometryMesh& m = *i.geometry->mesh;
+			auto uvMat = (i.transform).Inversed() * m.uvTransform;
 			for (auto& n : m.verts)
 			{
 				pos.push_back(n * i.transform);
-				uv.push_back(n);
 				tfs.push_back({ uvMat._11,uvMat._12,uvMat._21,uvMat._22 });
+			}
+			for (auto& n : m.uv)
+			{
+				uv.push_back(n);
 			}
 			for (auto& n : m.indices)
 				ind.push_back(n + vb);
+			auto normT = i.transform;
+			normT._41 = 0;
+			normT._42 = 0;
+			normT._43 = 0;
 			for (auto& n : m.path_norm)
 			{
-				if (i.brush)
-					pnb.push_back({ n.x,n.y,(float)i.brush->id });
-				else
-					pnb.push_back({ n.x,n.y,0.f });
+				auto norm = Vector2(cosf(n.y), sinf(n.y));
+				norm = norm * normT;
+				auto ny = atan2f(norm.y, norm.x);
 
+				if (i.brush)
+					pnb.push_back({ n.x,ny,(float)i.brush->id });
+				else
+					pnb.push_back({ n.x,ny,0.f });
 			}
 
 			vb += m.verts.size();
