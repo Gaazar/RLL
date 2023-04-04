@@ -80,10 +80,15 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(INCLUDE);$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>$(LIBRARY);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LIBPATH);$(LIBRARY);$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(INCLUDE);F:\libs\Sharp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LIBPATH);$(LibraryPath)</LibraryPath>
+    <SourcePath>F:\libs\Sharp\src;$(SourcePath)</SourcePath>
+    <ExecutablePath>F:\libs\bin64;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -118,7 +123,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -133,7 +138,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,13 +148,41 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="curve_tools.h" />
+    <ClCompile Include="DescriptorHeap.cpp" />
+    <ClCompile Include="fi_ft.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="perf_util.cpp" />
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="win32acrylic.cpp" />
+    <ClCompile Include="win32core.cpp" />
+    <ClCompile Include="win32core_mesh.cpp" />
+    <ClCompile Include="win32paint_d12.cpp" />
+    <ClInclude Include="DescriptorHeap.h" />
+    <ClInclude Include="fi_ft.h" />
+    <ClInclude Include="perf_util.h" />
+    <ClInclude Include="TextInterfaces.h" />
+    <ClInclude Include="Painter.h" />
+    <ClInclude Include="PathGeometry.h" />
+    <ClInclude Include="win32acrylic.h" />
+    <ClInclude Include="win32core_mesh.h" />
+    <ClInclude Include="win32paint_d12.h" />
+    <ClInclude Include="win32whelper.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="meshutil.h" />
+    <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="Interfaces.h" />
+    <ClInclude Include="MeshUtil.h" />
     <ClInclude Include="rlltest.h" />
     <ClInclude Include="TextProperty.h" />
     <ClInclude Include="Metrics.h" />
+    <ClInclude Include="win32impl.h" />
+    <ClInclude Include="win32internal.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\core.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

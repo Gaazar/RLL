@@ -11,10 +11,46 @@
     <Filter Include="src\include">
       <UniqueIdentifier>{ab5d0693-fdf8-40d1-a930-a35112e61642}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\win32impl">
+      <UniqueIdentifier>{9977944b-719a-45e0-8043-d703a7eae4d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\shader">
+      <UniqueIdentifier>{5b79fdd3-b12e-4741-8f3e-aead13e111c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\shared">
+      <UniqueIdentifier>{becbfa89-914f-47bd-b099-86832ff6c4d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\win32impl\include">
+      <UniqueIdentifier>{317ef664-6b39-488b-8827-01e4e2484725}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="win32core.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="win32acrylic.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorHeap.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="win32core_mesh.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="win32paint_d12.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="fi_ft.cpp">
+      <Filter>src\shared</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
+      <Filter>src\shared</Filter>
+    </ClCompile>
+    <ClCompile Include="perf_util.cpp">
+      <Filter>src\win32impl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -27,8 +63,58 @@
     <ClInclude Include="rlltest.h">
       <Filter>src\include</Filter>
     </ClInclude>
-    <ClInclude Include="meshutil.h">
+    <ClInclude Include="MeshUtil.h">
       <Filter>src\include</Filter>
     </ClInclude>
+    <ClInclude Include="Interfaces.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="PathGeometry.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Painter.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win32acrylic.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win32core_mesh.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win32impl.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win32internal.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win32paint_d12.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win32whelper.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorHeap.h">
+      <Filter>src\win32impl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="TextInterfaces.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="curve_tools.h">
+      <Filter>src\win32impl</Filter>
+    </ClInclude>
+    <ClInclude Include="fi_ft.h">
+      <Filter>src\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="perf_util.h">
+      <Filter>src\win32impl</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\core.hlsl">
+      <Filter>src\shader</Filter>
+    </None>
   </ItemGroup>
 </Project>
