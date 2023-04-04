@@ -107,6 +107,7 @@ struct CoreMesh
 	Math3D::Vector3* vertices;
 	Math3D::Vector2* uvs;
 	Math3D::Vector3* pnbs;
+	Math3D::Vector4* tfs;
 	unsigned short* indices;
 
 	unsigned int vertCount;
@@ -117,10 +118,11 @@ struct CoreMesh
 	ResourceBlob vertBuffer;
 	ResourceBlob uvBuffer;
 	ResourceBlob pnbBuffer;
+	ResourceBlob tfBuffer;
 	ResourceBlob indexBuffer;
 
 	D3D12_INDEX_BUFFER_VIEW ibv;
-	D3D12_VERTEX_BUFFER_VIEW vbv[3];
+	D3D12_VERTEX_BUFFER_VIEW vbv[4];
 
 public:
 	CoreMesh()
@@ -130,11 +132,13 @@ public:
 		indices = nullptr;
 		uvs = nullptr;
 		pnbs = nullptr;
+		tfs = nullptr;
 		subMeshs = nullptr;
 		vertBuffer.data = reinterpret_cast<void**>(&vertices);
 		indexBuffer.data = reinterpret_cast<void**>(&indices);
 		uvBuffer.data = reinterpret_cast<void**>(&uvs);
 		pnbBuffer.data = reinterpret_cast<void**>(&pnbs);
+		tfBuffer.data = reinterpret_cast<void**>(&tfs);
 	}
 	struct SubMesh
 	{

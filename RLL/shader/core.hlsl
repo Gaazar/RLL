@@ -54,16 +54,17 @@ StructuredBuffer<Brush> brushes : register(t1, space2);
 struct VertexIn
 {
 	float3 PosL : POSITION;
-	float3 pnc : COLOR; // path normal color
+	float3 pnc : PNB; // path normal color
 	// float3 norms : NORMAL;//vNormal uvNormal uvNorLen
 	float2 uv : TEXCOORD;
+	float4 tf : UVTF;
 };
 
 struct VertexOut
 {
 	float4 PosH : SV_POSITION;
 	float2 uv : TEXCOORD;
-	nointerpolation float3 pnc : COLOR;
+	nointerpolation float3 pnc : PNB;
 };
 VertexOut VS(VertexIn vin, uint id
 			 : SV_InstanceID)
@@ -90,7 +91,8 @@ VertexOut VS(VertexIn vin, uint id
 	// u = vwh.x * (s * (m[0][0] * n.x + m[1][0] * n.y) - t * (m[0][0] * uv.x + m[1][0] * uv.y + m[3][0]));
 	// v = vwh.y * (s * (m[0][1] * n.x + m[1][1] * n.y) - t * (m[0][1] * uv.x + m[1][1] * uv.y + m[3][1]));
 	// d = (s * s * s * t + s * s * sqrt(u * u + v * v)) / (u * u + v * v - s * s * t * t + 0.0001);
-	uv += n * d;
+	uv += mul(n * d, float2x2(vin.tf.xy, vin.tf.zw));
+	//uv += n * d;
 	vout.uv = uv;
 	vout.PosH = mul(float4(p, 1.0f), m); //+ float4(d * n.x / 400.0, d * n.y / 300., 0, 0);
 	vout.pnc = vin.pnc;

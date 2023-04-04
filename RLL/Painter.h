@@ -102,8 +102,8 @@ namespace RLL
 		virtual void Rectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, bool inv = false) = 0;
 		virtual void Triangle(Math3D::Vector2 p0, Math3D::Vector2 p1, Math3D::Vector2 p2, bool inv = false) = 0;
 		virtual void RoundRectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, Math3D::Vector2 radius, bool inv = false) = 0;
-		virtual IGeometry* Fill(Math3D::Matrix4x4* bgTransform = nullptr) = 0;
-		virtual IGeometry* Stroke(float stroke = 1, StrokeStyle* type = nullptr, Math3D::Matrix4x4* bgTransform = nullptr) = 0;
+		virtual IGeometry* Fill() = 0;
+		virtual IGeometry* Stroke(float stroke = 1, StrokeStyle* type = nullptr) = 0;
 		virtual void Reset() = 0;
 		virtual void Dispose() = 0;
 

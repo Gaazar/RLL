@@ -207,7 +207,8 @@ void LoadShader()
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "PNB", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "UVTF", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 	ComPtr<ID3DBlob> vbc = CompileShader(SHADER_CORE, nullptr, "VS", "vs_5_1");
 	ComPtr<ID3DBlob> pbc = CompileShader(SHADER_CORE, nullptr, "PS", "ps_5_1");
@@ -453,7 +454,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	gb->Reset();
 	auto go1 = (D3D12Geometry*)fc_msyh->GetPlainGlyph(U'M');
 
-
+	auto tmat = Matrix4x4::Scaling(1.234) * Matrix4x4::Translation({ 200,300 }) * Matrix4x4::Rotation(1, 0, 0);
 	RLL::ColorGradient cg;
 	cg.colors[0] = { 1,1,0,0 };
 	cg.colors[1] = { 0.3,1,0.3,0 };
@@ -518,7 +519,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	auto go_geo = gb->Fill();
 
 	sb->Push(go_circle, br_yg, &(Matrix4x4::Scaling(60) * Matrix4x4::Translation({ -100,70 })));
-	sb->Push(go_geo, br_rec, &(Matrix4x4::Scaling(40) * Matrix4x4::Translation({ -300,100 })));
+	sb->Push(go_geo, br_rec, &(Matrix4x4::Scaling(40) * Matrix4x4::Translation({ -300,100 }) * Matrix4x4::Rotation(Quaternion::RollPitchYaw(0, 0, 1))));
 
 	gb->Reset();
 	gb->Triangle({ -1,0 }, { 1,0 }, { 1.5,1.26 });
@@ -560,7 +561,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	//go_geo = gb->Stroke(5, nullptr, &Matrix4x4::Scaling({ 1.f / 200, 1.f / 200, 1 }));
 	go_geo = gb->Stroke(5, nullptr);
 	//go_geo = gb->Fill(&Matrix4x4::Scaling({ 1.f / 200, 1.f / 200, 1 }));
-	sb->Push(go_geo, br_yg_tex, &(Matrix4x4::Scaling(1) * Matrix4x4::Translation({ -180,-150 })));
+	sb->Push(go_geo, br_yg_tex, &(Matrix4x4::Translation({ -180,-150 })));
 
 	cm_t_cir = ((D3D12SVG*)sb->Commit())->mesh;
 
@@ -659,19 +660,21 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		cmdList->SetGraphicsRootShaderResourceView(5, paintDevice.gpuBrush->GetGPUVirtualAddress());
 
 		cmdList->IASetIndexBuffer(&cm_t_glfs->ibv);
-		cmdList->IASetVertexBuffers(0, 3, cm_t_glfs->vbv);
+		cmdList->IASetVertexBuffers(0, 4, cm_t_glfs->vbv);
 
 		cmdList->DrawIndexedInstanced(cm_t_glfs->idxCount, 1, 0, 0, 0);
 
 		cmdList->SetGraphicsRootConstantBufferView(0, rbo_circ.gpuBuffer->GetGPUVirtualAddress());
 		cmdList->IASetIndexBuffer(&cm_t_cir->ibv);
-		cmdList->IASetVertexBuffers(0, 3, cm_t_cir->vbv);
+		cmdList->IASetVertexBuffers(0, 4, cm_t_cir->vbv);
 
 		//cmdList->SetPipelineState(dbgWirePSO.Get());
 		//cmdList->DrawIndexedInstanced(cm_t_cir->idxCount, 1, 0, 0, 0);
 
 		//cmdList->SetPipelineState(corePSO.Get());
 		cmdList->DrawIndexedInstanced(cm_t_cir->idxCount, 1, 0, 0, 0);
+		//cmdList->SetPipelineState(dbgWirePSO.Get());
+		//cmdList->DrawIndexedInstanced(cm_t_cir->idxCount, 1, 0, 0, 0);
 
 		//cmdList->DrawIndexedInstanced(cm_t_cir->idxCount, 1, 0, 0, 0);
 

@@ -25,7 +25,7 @@ cbuffer cbFrame : register(b1)
 struct VertexIn
 {
 	float3 PosL : POSITION;
-	float3 pnc : COLOR; // path normal color
+	float3 pnc : PNB; // path normal color
 
 	float2 uv : TEXCOORD;
 };
@@ -34,7 +34,7 @@ struct VertexOut
 {
 	float4 PosH : SV_POSITION;
 	float2 uv : TEXCOORD;
-	nointerpolation float3 pnc : COLOR;
+	nointerpolation float3 pnc : PNB;
 };
 VertexOut VS(VertexIn vin, uint id
 			 : SV_InstanceID)

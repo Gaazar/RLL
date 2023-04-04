@@ -332,6 +332,7 @@ void D3D12PaintDevice::CommitChange()
 			cMeshGroup.uploads[1] = CreateUploadBuffer(vex * sizeof(*CoreMesh::vertices));
 			cMeshGroup.uploads[2] = CreateUploadBuffer(vex * sizeof(*CoreMesh::uvs));
 			cMeshGroup.uploads[3] = CreateUploadBuffer(vex * sizeof(*CoreMesh::pnbs));
+			cMeshGroup.uploads[4] = CreateUploadBuffer(vex * sizeof(*CoreMesh::tfs));
 			ind = 0; vex = 0;
 #define arrcpyi(dst,src,di,sz) memcpy( (( (decltype(src))dst ) + (di) ) ,(src),sizeof(*src)*(sz))
 			for (auto i : cMeshGroup.meshs)
@@ -340,6 +341,7 @@ void D3D12PaintDevice::CommitChange()
 				arrcpyi(cMeshGroup.uploads[1].data, i->vertices, vex, i->vertCount);
 				arrcpyi(cMeshGroup.uploads[2].data, i->uvs, vex, i->vertCount);
 				arrcpyi(cMeshGroup.uploads[3].data, i->pnbs, vex, i->vertCount);
+				arrcpyi(cMeshGroup.uploads[4].data, i->tfs, vex, i->vertCount);
 
 				ind += i->idxCount;
 				vex += i->vertCount;
@@ -348,6 +350,7 @@ void D3D12PaintDevice::CommitChange()
 			cMeshGroup.resource[1] = MakeDefaultBuffer(cMeshGroup.uploads[1].gpuBuffer, vex * sizeof(*CoreMesh::vertices));
 			cMeshGroup.resource[2] = MakeDefaultBuffer(cMeshGroup.uploads[2].gpuBuffer, vex * sizeof(*CoreMesh::uvs));
 			cMeshGroup.resource[3] = MakeDefaultBuffer(cMeshGroup.uploads[3].gpuBuffer, vex * sizeof(*CoreMesh::pnbs));
+			cMeshGroup.resource[4] = MakeDefaultBuffer(cMeshGroup.uploads[4].gpuBuffer, vex * sizeof(*CoreMesh::tfs));
 
 			ind = 0; vex = 0;
 			for (auto i : cMeshGroup.meshs)
@@ -363,10 +366,12 @@ void D3D12PaintDevice::CommitChange()
 			cMeshGroup.uploads[1].gpuBuffer->Unmap(0, nullptr);
 			cMeshGroup.uploads[2].gpuBuffer->Unmap(0, nullptr);
 			cMeshGroup.uploads[3].gpuBuffer->Unmap(0, nullptr);
+			cMeshGroup.uploads[4].gpuBuffer->Unmap(0, nullptr);
 			cMeshGroup.uploads[0].data = nullptr;
 			cMeshGroup.uploads[1].data = nullptr;
 			cMeshGroup.uploads[2].data = nullptr;
 			cMeshGroup.uploads[3].data = nullptr;
+			cMeshGroup.uploads[4].data = nullptr;
 		}
 		TimeCheck("Batch upload end");
 		TimeCheckSum();
@@ -705,17 +710,13 @@ void D3D12GeometryBuilder::ArcTo(Math3D::Vector2 center, Math3D::Vector2 radius,
 	}
 }
 
-IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* tf)
+IGeometry* D3D12GeometryBuilder::Fill()
 {
 	if (opening)
 	{
 		SetError("Filling a non ended GeometryBuilder, auto end with close (End(true);).");
 		End(true);
 	}
-	Matrix4x4 transform = Matrix4x4::Identity();
-	if (tf)
-		transform = *tf;
-
 	if (!paths.size())
 	{
 		SetError("Empty GeometryBuilder. No path built.");
@@ -759,17 +760,17 @@ IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* tf)
 	for (auto& c : hBand)
 	{
 		D3D12GPUCurve fc;
-		fc.begin = c.begin * transform;
-		fc.control = c.control * transform;
-		fc.end = c.end * transform;
+		fc.begin = c.begin;
+		fc.control = c.control;
+		fc.end = c.end;
 		buffer->curves.push_back(fc);
 	}
 	for (auto& c : vBand)
 	{
 		D3D12GPUCurve fc;
-		fc.begin = c.begin * transform;
-		fc.control = c.control * transform;
-		fc.end = c.end * transform;
+		fc.begin = c.begin;
+		fc.control = c.control;
+		fc.end = c.end;
 		buffer->curves.push_back(fc);
 	}
 
@@ -778,7 +779,7 @@ IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* tf)
 	simplifyConvex(cvx.verts, 6);
 	cvx.MakeIndex();
 	cvx.MakeNormal();
-	cvx.MakeUV(transform);
+	//cvx.MakeUV();
 	cvx.SetPath(ifGeom->pathID);
 	return ifGeom;
 }
@@ -824,7 +825,7 @@ void StrokeQBezier(IGeometryBuilder* bd, D3D12GPUCurve& i, float hfstroke)
 	}
 
 }
-RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* type, Math3D::Matrix4x4* tf)
+RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* type)
 {
 	//return nullptr;
 	if (type == nullptr)
@@ -1184,7 +1185,7 @@ RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* typ
 	}
 
 
-	auto res = bd->Fill(tf);
+	auto res = bd->Fill();
 	bd->Release();
 	return res;
 };
@@ -1253,26 +1254,30 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 	vector<Vector2> uv;
 	vector<Vector3> pos;
 	vector<Vector3> pnb;
+	vector<Vector4> tfs;
 	vector<short> ind;
 	int vb = 0, ib = 0;
 	uv.reserve(512);
 	pos.reserve(512);
 	pnb.reserve(512);
 	ind.reserve(512);
+	tfs.reserve(512);
+
 	for (auto& i : layers)
 	{
 		switch (i.type)
 		{
 		case Layer::TYPE::TYPE_GEOMETRY:
 		{
+			auto uvMat = i.transform.Inversed();
+			//uvMat._41 = i.transform._41;
+			//uvMat._42 = i.transform._42;
 			D3D12GeometryMesh& m = *i.geometry->mesh;
 			for (auto& n : m.verts)
 			{
 				pos.push_back(n * i.transform);
-			}
-			for (auto& n : m.uv)
-			{
-				uv.push_back(n );
+				uv.push_back(n);
+				tfs.push_back({ uvMat._11,uvMat._12,uvMat._21,uvMat._22 });
 			}
 			for (auto& n : m.indices)
 				ind.push_back(n + vb);
@@ -1297,6 +1302,7 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 				pos.push_back(v.vertices[n] * i.transform);
 				uv.push_back(v.uvs[n]);
 				pnb.push_back(v.pnbs[n]);
+				tfs.push_back(v.tfs[n]);
 			}
 			for (int n = 0; n < v.idxCount; n++)
 			{
@@ -1326,11 +1332,13 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 	corem->uvs = new Vector2[corem->vertCount];
 	corem->pnbs = new Vector3[corem->vertCount];
 	corem->vertices = new Vector3[corem->vertCount];
+	corem->tfs = new Vector4[corem->vertCount];
 #define vecize(x) (sizeof(x[0]) * x.size())
 	memcpy(corem->indices, &ind[0], vecize(ind));
 	memcpy(corem->uvs, &uv[0], vecize(uv));
 	memcpy(corem->pnbs, &pnb[0], vecize(pnb));
 	memcpy(corem->vertices, &pos[0], vecize(pos));
+	memcpy(corem->tfs, &tfs[0], vecize(tfs));
 	TimeCheck("Copy done.");
 
 	//corem.UploadToGPUMemory

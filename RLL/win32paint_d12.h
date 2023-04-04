@@ -186,7 +186,7 @@ struct D3D12GeometryMesh
 {
 	std::vector<short> indices;
 	std::vector<Math3D::Vector2> verts;
-	std::vector<Math3D::Vector2> uv;
+	//std::vector<Math3D::Vector2> uv;
 	std::vector<Math3D::Vector2> path_norm;
 	void MakeIndex(int off = 0)
 	{
@@ -260,12 +260,12 @@ struct D3D12GeometryMesh
 	}
 	void MakeUV(Math3D::Matrix4x4& t)
 	{
-		uv.reserve(verts.size());
-		for (auto& i : verts)
-		{
-			auto u = i * t;
-			uv.push_back(u);
-		}
+		//uv.reserve(verts.size());
+		//for (auto& i : verts)
+		//{
+		//	//auto u = i * t;
+		//	uv.push_back(i);
+		//}
 	}
 	float GetArea() { return 0; };
 	float GetCircumference() { return 0; };
@@ -286,8 +286,8 @@ struct PathBuffer
 struct MeshGroup
 {
 	std::vector<CoreMesh*> meshs;
-	ID3D12Resource* resource[4];
-	ResourceBlob uploads[4];
+	ID3D12Resource* resource[5];
+	ResourceBlob uploads[5];
 };
 
 class D3D12PaintDevice : public RLL::IPaintDevice
@@ -403,8 +403,8 @@ public:
 	void Triangle(Math3D::Vector2 p0, Math3D::Vector2 p1, Math3D::Vector2 p2, bool inv);
 	void RoundRectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, Math3D::Vector2 radius, bool inv);
 
-	RLL::IGeometry* Fill(Math3D::Matrix4x4* bgTransform);
-	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type, Math3D::Matrix4x4* bgTransform);
+	RLL::IGeometry* Fill();
+	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type);
 	void Reset();
 	void Dispose();
 
