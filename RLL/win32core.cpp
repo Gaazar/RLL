@@ -468,21 +468,21 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 
 
 	sb = paintDevice.CreateSVGBuilder();
-	auto svg_sb = (D3D12SVG*)hb_test(fc_rob, sb, L"Latin series AW AV VA WA fi fii fj fl ft ff. 中字默。abc");
+	auto svg_sb = (D3D12SVG*)hb_test(fc_rob, sb, L"Latin series AW AV VA WA fi fii fj fl ft ff. 中字默。abcDT");
 	sb->Reset();
-	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Latin series AW AV VA WA fi fii fj fl ft ff. 中字默。abc");
+	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Latin series AW AV VA WA fi fii fj fl ft ff. 中字默。abcDT");
 	sb->Reset();
 	auto svg_sbk = (D3D12SVG*)hb_test(fc_khm, sb, L"ញុំបានមើ khmer");//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"中字默一川七八毫");//ញុំបានមើ khmer
+	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"中字默一十川七八毫");//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbcs = (D3D12SVG*)hb_test(fc_sun, sb, L"中字默一川七八毫");//ញុំបានមើ khmer
+	auto svg_sbcs = (D3D12SVG*)hb_test(fc_sun, sb, L"中字默一十川七八毫");//ញុំបានមើ khmer
 	sb->Reset();
 	auto svg_dsm = (D3D12SVG*)hb_test(fc_dsm, sb, L"Latin series TrueType DroidSansMono.");
 	sb->Reset();
 	auto svg_heb = (D3D12SVG*)hb_test(fc_tms, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية");
 	sb->Reset();
-	auto svg_emj = (D3D12SVG*)hb_test(fc_emj, sb, L"🧑🧑🏻🧑🏼🧑🏽🧑🏾🧑🏿");
+	auto svg_emj = (D3D12SVG*)hb_test(fc_emj, sb, L"🧑🧑🏻🧑🏼🧑🏽🧑🏾🧑🏿🥵😰");
 
 	sb->Reset();
 	sb->Push(go);

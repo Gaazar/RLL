@@ -736,20 +736,29 @@ IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* bgTransform)
 	auto tf = Matrix4x4::Identity();
 	if (bgTransform)
 		tf = *bgTransform;
-
+	std::vector<D3D12GPUCurve> tfCurve;
 	for (auto& i : paths)
 	{
 		for (auto& c : i.curves)
 		{
-			if (!c.IsHorizontal())
-			{
-				hBand.push_back(c);
-			}
-			if (!c.IsVertical())
-			{
-				vBand.push_back(c);
-			}
+			D3D12GPUCurve fc;
+			fc.begin = c.begin * tf;
+			fc.control = c.control * tf;
+			fc.end = c.end * tf;
+			tfCurve.push_back(fc);
 		}
+	}
+	for (auto& c : tfCurve)
+	{
+		if (!c.IsHorizontal())
+		{
+			hBand.push_back(c);
+		}
+		if (!c.IsVertical())
+		{
+			vBand.push_back(c);
+		}
+
 	}
 	sort(hBand.begin(), hBand.end(), [](D3D12GPUCurve& l, D3D12GPUCurve& r) {return l.Max().x > r.Max().x; });
 	sort(vBand.begin(), vBand.end(), [](D3D12GPUCurve& l, D3D12GPUCurve& r) {return l.Max().y > r.Max().y; });
@@ -762,19 +771,11 @@ IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* bgTransform)
 	ifGeom->path = &buffer->paths[ifGeom->pathID];
 	for (auto& c : hBand)
 	{
-		D3D12GPUCurve fc;
-		fc.begin = c.begin * tf;
-		fc.control = c.control * tf;
-		fc.end = c.end * tf;
-		buffer->curves.push_back(fc);
+		buffer->curves.push_back(c);
 	}
 	for (auto& c : vBand)
 	{
-		D3D12GPUCurve fc;
-		fc.begin = c.begin * tf;
-		fc.control = c.control * tf;
-		fc.end = c.end * tf;
-		buffer->curves.push_back(fc);
+		buffer->curves.push_back(c);
 	}
 
 	D3D12GeometryMesh& cvx = *ifGeom->mesh;
