@@ -1,77 +1,14 @@
-cbuffer cbObject : register(b0)
-{
-	float4x4 objToWorld;
-	int sampleType;
-	float lerpTime;
-}
-
-// cbuffer cbPass :register(b1)
-//{
-//
-//
-// };
-
-cbuffer cbFrame : register(b1)
-{
-	float4x4 gWorldViewProj;
-	float4 dColor;
-	float time;
-	int2 vwh;
-	float reservedCBF;
-};
-
-struct Brush
-{
-	float2 center; // in directional is direction
-	float2 focus;
-	float radius;
-	uint type;	// color mode: 0:foreground 1:directional 2:radial 3:sweep 4:tex
-	uint texid; // texture index
-	float pad;
-	float pos[8];
-	float4 stops[8];
-};
-struct Path
-{
-	uint hi;
-	uint vi;
-	uint hl;
-	uint vl;
-};
-struct Curve
-{
-	float2 begin;
-	float2 control;
-	float2 end;
-};
+#include "path.hlsli"
 SamplerState g_sampler : register(s0);
 
-Texture2D g_texture[1024] : register(t0); // albedo normal ORM
-StructuredBuffer<Path> glyphs : register(t0, space1);
-StructuredBuffer<Curve> curves : register(t1, space1);
-StructuredBuffer<Brush> brushes : register(t1, space2);
 
-struct VertexIn
-{
-	float3 PosL : POSITION;
-	float3 pnc : PNB; // path normal color
-	// float3 norms : NORMAL;//vNormal uvNormal uvNorLen
-	float2 uv : TEXCOORD;
-	float4 tf : UVTF;
-};
 
-struct VertexOut
-{
-	float4 PosH : SV_POSITION;
-	float2 uv : TEXCOORD;
-	nointerpolation float3 pnc : PNB;
-};
 VertexOut VS(VertexIn vin, uint id
 			 : SV_InstanceID)
 {
 	VertexOut vout;
 	float2 n = float2(cos(vin.pnc.y), sin(vin.pnc.y));
-	float3 p = vin.PosL;
+	float3 p = float3(vin.PosL,0);
 	float2 uv = vin.uv;
 	float4x4 m = mul(objToWorld, gWorldViewProj);
 
@@ -85,12 +22,6 @@ VertexOut VS(VertexIn vin, uint id
 	float d = (s * s * s * t + s * s * sqrt(u * u + v * v)) / (u * u + v * v - s * s * t * t + 0.0001);
 	// vin.PosL += float3(1.2f, 0, 0) * vin.path_norm.x;
 	p += float3(n * d, 0);
-
-	// s = m[0][3] * uv.x + m[1][3] * uv.y + m[3][3];
-	// t = m[0][3] * n.x + m[1][3] * n.y;
-	// u = vwh.x * (s * (m[0][0] * n.x + m[1][0] * n.y) - t * (m[0][0] * uv.x + m[1][0] * uv.y + m[3][0]));
-	// v = vwh.y * (s * (m[0][1] * n.x + m[1][1] * n.y) - t * (m[0][1] * uv.x + m[1][1] * uv.y + m[3][1]));
-	// d = (s * s * s * t + s * s * sqrt(u * u + v * v)) / (u * u + v * v - s * s * t * t + 0.0001);
 	uv += mul(n * d, float2x2(vin.tf.xy, vin.tf.zw));
 	//uv += n * d;
 	vout.uv = uv;
@@ -99,53 +30,6 @@ VertexOut VS(VertexIn vin, uint id
 	return vout;
 }
 
-float4 sampleColor(Brush c, float p)
-{
-	float4
-		fin = lerp(c.stops[0], c.stops[1], clamp((p - c.pos[0]) / (c.pos[1] - c.pos[0]), 0, 1));
-	fin = lerp(fin, c.stops[2], clamp((p - c.pos[1]) / (c.pos[2] - c.pos[1]), 0, 1));
-	fin = lerp(fin, c.stops[3], clamp((p - c.pos[2]) / (c.pos[3] - c.pos[2]), 0, 1));
-
-	return fin;
-}
-float4 gradientDir(Brush c, float2 uv, float2 direction)
-{
-	return sampleColor(c, frac(uv.x * direction.x + uv.y * direction.y));
-}
-float4 gradientRad(Brush clr, float2 uv, float2 center, float radius, float2 focus)
-{
-	/// APPLY FOCUS MODIFIER
-	// project a point on the circle such that it passes through the focus and through the coord,
-	// and then get the distance of the focus from that point.
-	// that is the effective gradient length
-	float gradLength = 1.0;
-	float2 diff = focus - center;
-	float2 rayDir = normalize(uv - focus);
-	float a = dot(rayDir, rayDir);
-	float b = 2.0 * dot(rayDir, diff);
-	float c = dot(diff, diff) - radius * radius;
-	float disc = b * b - 4.0 * a * c;
-	if (disc >= 0.0)
-	{
-		float t = (-b + sqrt(abs(disc))) / (2.0 * a);
-		float2 projection = focus + rayDir * t;
-		gradLength = distance(projection, focus);
-	}
-	else
-	{
-		// gradient is undefined for this coordinate
-	}
-
-	/// OUTPUT
-	float grad = distance(uv, focus) / gradLength;
-	return sampleColor(clr, frac(grad));
-}
-float4 gradientSwe(Brush c, float2 uv, float2 center, float axis)
-{
-	uv = uv - center;
-	float angel = atan2(uv.x, uv.y);
-	return sampleColor(c, frac((angel / 3.1415926 / 2) + axis - 0.25));
-}
 float4 PS(VertexOut pin) : SV_Target
 {
 	float2 uv = pin.uv;

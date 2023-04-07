@@ -104,7 +104,7 @@ struct CoreMesh
 		VERTEX_FORMAT_UV2,
 		VERTEX_FORMAT_UV3,
 	};
-	Math3D::Vector3* vertices;
+	Math3D::Vector2* vertices;
 	Math3D::Vector2* uvs;
 	Math3D::Vector3* pnbs;
 	Math3D::Vector4* tfs;

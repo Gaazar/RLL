@@ -3,58 +3,15 @@
 #include "Interfaces.h"
 namespace RLL
 {
-	struct Color : public Math3D::Quaternion
-	{
-		void SetOpacity(float opacity)
-		{
-			w = 1.f - opacity;
-		}
-		void SetColor(float r, float g, float b, float a = 0)
-		{
-			x = r;
-			y = g;
-			z = b;
-			w = a;
-		}
-		Color()
-		{};
-		Color(float r, float g, float b, float a)
-		{
-			x = r;
-			y = g;
-			z = b;
-			w = a;
-		};
-	};
-	struct ColorGradient
-	{
-		Color colors[8];
-		float positions[8] = { 0.f,2.f };
-		ColorGradient()
-		{
-			for (int i = 1; i < 8; i++)
-			{
-				positions[i] = 2;
-			}
-		}
-	};
-	struct RectangleI
-	{
-		int left;
-		int top;
-		int right;
-		int bottom;
-	};
-
-	struct Rectangle : public Math3D::Quaternion
-	{
-
-	};
-
 	class ITexture : public IBase
 	{
+		virtual SizeI GetSize() = 0;
 		virtual void Dispose() = 0;
 
+	};
+	class IRenderTarget : public ITexture
+	{
+		virtual ITexture* AsTexture() = 0;
 	};
 	enum class JOINT_TYPE
 	{
@@ -80,6 +37,7 @@ namespace RLL
 	{
 		JOINT_TYPE joint = JOINT_TYPE::FLAT;
 		CAP_TYPE cap = CAP_TYPE::NONE;
+		float length = 10;
 	};
 	class IBrush : public IBase
 	{
@@ -128,7 +86,7 @@ namespace RLL
 	};
 
 	class IPaintContext;
-	class IPaintDevice
+	class IPaintDevice :public RLL::IBase
 	{
 	public:
 		virtual IBrush* CreateSolidColorBrush(Color c) = 0;
@@ -137,6 +95,7 @@ namespace RLL
 		virtual IBrush* CreateSweepBrush(Math3D::Vector2 center, float degree, ColorGradient* grad) = 0;
 		virtual IBrush* CreateTexturedBrush(ITexture* tex, void* sampleMode) = 0;
 		virtual ITexture* CreateTexture() = 0;
+		virtual IRenderTarget* CreateRenderTarget() = 0;
 		virtual ITexture* CreateTextureFromFile() = 0;
 		virtual ITexture* CreateTextureFromStream() = 0;
 		virtual ITexture* CreateTextureFromMemory() = 0;
@@ -144,24 +103,29 @@ namespace RLL
 		virtual IGeometryBuilder* CreateGeometryBuilder() = 0;
 		virtual ISVGBuilder* CreateSVGBuilder() = 0;
 
-		virtual IPaintContext* CreateContext() = 0;
+		virtual IPaintContext* CreateContext(int flags) = 0;
 
 		virtual void CopyTexture(ITexture* src, ITexture* dst) = 0;
 		virtual void CopyTextureRegion(ITexture* src, ITexture* dst, RectangleI) = 0;
 
-		//virtual void Flush() = 0;
+		virtual void Flush() = 0;
+		virtual void ResizeView(SizeI& r) = 0;
 	};
-	class IPaintContext
+	class IPaintContext : public IBase
 	{
+		virtual void Dispose() = 0;
+	public:
 		virtual IPaintDevice* GetDevice() = 0;
-		//virtual void SetRenderTarget(ITexture* rt) = 0;
+		virtual void SetRenderTarget(IRenderTarget* rt) = 0;
 		//virtual ITexture* GetRenderTarget() = 0;
-		virtual void BeginDraw(Color clear = {}) = 0;
-		//virtual void PushLayer(Rectangle clip) = 0;
-		//virtual void PopLayer() = 0;
-		virtual void Done() = 0;
+		virtual void BeginDraw() = 0;
+		virtual void Clear(Color clear = {}) = 0;
+		virtual void PushClip(Rectangle clip) = 0;
+		virtual void PopClip() = 0;
 		virtual void EndDraw() = 0;
+		virtual void SetTransform(Math3D::Matrix4x4& tfCache) = 0;
 		virtual void DrawSVG(ISVG* svg) = 0;
+		virtual void DrawMorph() = 0;
 		//virtual void DrawGeometry(IGeometry* geom) = 0;
 
 	};

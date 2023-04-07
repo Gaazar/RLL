@@ -148,6 +148,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="win32paint_d12context.cpp" />
+    <ClCompile Include="win32paint_d12device.cpp" />
+    <ClCompile Include="win32paint_d12geometry.cpp" />
+    <ClCompile Include="win32paint_d12svg.cpp" />
     <ClInclude Include="curve_tools.h" />
     <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="fi_ft.cpp" />

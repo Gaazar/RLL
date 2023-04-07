@@ -2,16 +2,19 @@
 #include "Painter.h"
 #include "vector"
 #include "win32core_mesh.h"
+#include "DescriptorHeap.h"
+
+#define ELLIPSE_QUALITY 8
 
 #ifdef _DEBUG
 #include <iostream>
 #endif
 
 struct D3D12GPUPath {
-	unsigned int hi = 0;
-	unsigned int  vi = 0;
-	unsigned int  hl = 0;
-	unsigned int  vl = 0;
+	int hi = 0;
+	int  vi = 0;
+	int  hl = 0;
+	int  vl = 0;
 };
 struct D3D12GPUCurve {
 	Math3D::Vector2 begin;
@@ -284,6 +287,8 @@ struct PathBuffer
 #define FLAG_D12PD_CURVE_DIRTY 0x2
 #define FLAG_D12PD_BRUSH_DIRTY 0x4
 #define FLAG_D12PD_MESH_DIRTY 0x8
+#define FLAG_D12PC_FRAME_CONTEXT 0x1
+#define FLAG_D12PC_NONE 0x0;
 
 struct MeshGroup
 {
@@ -291,42 +296,82 @@ struct MeshGroup
 	ID3D12Resource* resource[5];
 	ResourceBlob uploads[5];
 };
+class D3D12PaintContext;
+class D3D12FramePaintContext;
 
 class D3D12PaintDevice : public RLL::IPaintDevice
 {
 	friend class D3D12GeometryBuilder;
 	friend class D3D12SVGBuilder;
 	friend class CoreMesh;
+	friend class D3D12Geometry;
 
+	UINT msaaQuality;
 	void UploadMesh(CoreMesh* m);
 	ID3D12Resource* MakeDefaultBuffer(ID3D12Resource* upload, int size);
+	int AllocateBrush();
+	int AllocatePath(D3D12GPUPath&);
+	int AllocateMesh();
+	void LoadShaders();
+	void CreateRenderTargets();
+
 public:
 	int flag = 0b111;
-	ID3D12Device5* d3dDevice = nullptr;
-	ID3D12GraphicsCommandList* cmdList = nullptr;
-	ID3D12RootSignature* coreSignature = nullptr;
-	ID3D12PipelineState* corePSO = nullptr;
-	ID3D12RootSignature* coreMorphSignature = nullptr;
-	ID3D12PipelineState* coreMorphPSO = nullptr;
+	ComPtr < ID3D12Device5> d3dDevice = nullptr;
+
+	UINT cFence = 0;
+	ComPtr<ID3D12Fence> gFence;
+	ComPtr<ID3D12CommandQueue> cmdQueue;
+	ComPtr<ID3D12CommandAllocator> cmdAllocator;
+	ComPtr<ID3D12GraphicsCommandList> cmdList;
+	//ComPtr<ID3D12CommandAllocator> cmdAllocatorCopy;
+	//ComPtr<ID3D12CommandList> cmdListCopy;
+	ComPtr<IDXGISwapChain1> swapChain;
+	ComPtr<IDCompositionTarget> dcompTarget;
+	ComPtr<IDCompositionVisual> dcompVisual;
+	DescriptorHeap rtvHeap;
+	ComPtr<ID3D12Resource> scBuffer[2];
+	ComPtr<ID3D12Resource> maBuffer[2];
+
+	ComPtr<ID3D12RootSignature> coreSignature;
+	ComPtr<ID3D12PipelineState> corePSO;
+	ComPtr<ID3D12RootSignature> coreMorphSignature;
+	ComPtr<ID3D12PipelineState> coreMorphPSO;
+	ComPtr<ID3D12PipelineState> dbgWirePSO;
+	std::vector<D3D12PaintContext*> contexs;
 
 	PathBuffer paths;
 	std::vector<MeshGroup> meshGroups;
 	MeshGroup cMeshGroup;
-	ID3D12Resource* gpuPath = nullptr;
-	ID3D12Resource* gpuCurve = nullptr;
-	ID3D12Resource* gpuBrush = nullptr;
+	ComPtr<ID3D12Resource> gpuPath;
+	ComPtr<ID3D12Resource> gpuCurve;
+	ComPtr<ID3D12Resource> gpuBrush;
+	DescriptorHeap gpuTextureHeap;
 
-	D3D12PaintDevice()
-	{
-		paths.brushes.push_back(D3D12GPUBrush::Foreground());
-	};
+	ComPtr<IDCompositionDevice> dCompDevice;
+	ComPtr<IDXGIDevice1> dxgiDevice;
+	ComPtr<IDXGIFactory5> dxgiFactory;
 
+	CD3DX12_VIEWPORT viewport;
+	CD3DX12_RECT scissorRect;
+	UINT rtvDescriptorSize;
+	bool msaaEnable = false;
+	UINT currentBuffer;
+
+
+	D3D12PaintDevice();
+	D3D12PaintDevice(RLL::IFrame*);
+	void CreateDevices(int flags);
+	void ResizeView(RLL::SizeI& r);
+
+	void Dispose() { NOIMPL; };
 	RLL::IBrush* CreateSolidColorBrush(RLL::Color c);
 	RLL::IBrush* CreateDirectionalBrush(Math3D::Vector2 direction, RLL::ColorGradient* grad);
 	RLL::IBrush* CreateRadialBrush(Math3D::Vector2 center, float radius, RLL::ColorGradient* grad);
 	RLL::IBrush* CreateSweepBrush(Math3D::Vector2 center, float degree, RLL::ColorGradient* grad);
 	RLL::IBrush* CreateTexturedBrush(RLL::ITexture* tex, void* sampleMode) { NOIMPL; return nullptr; };
 	RLL::ITexture* CreateTexture() { NOIMPL; return nullptr; };
+	RLL::IRenderTarget* CreateRenderTarget() { NOIMPL; return nullptr; };
 	RLL::ITexture* CreateTextureFromFile() { NOIMPL; return nullptr; };
 	RLL::ITexture* CreateTextureFromStream() { NOIMPL; return nullptr; };
 	RLL::ITexture* CreateTextureFromMemory() { NOIMPL; return nullptr; };
@@ -334,7 +379,7 @@ public:
 	RLL::IGeometryBuilder* CreateGeometryBuilder();
 	RLL::ISVGBuilder* CreateSVGBuilder();
 
-	RLL::IPaintContext* CreateContext() { NOIMPL; return nullptr; };
+	RLL::IPaintContext* CreateContext(int flags);
 
 	void CopyTexture(RLL::ITexture* src, RLL::ITexture* dst) { NOIMPL; return; };
 	void CopyTextureRegion(RLL::ITexture* src, RLL::ITexture* dst, RLL::RectangleI) { NOIMPL; return; };
@@ -343,11 +388,56 @@ public:
 	ID3D12Resource* CreateDefaultBuffer(const void* initData, UINT64 size, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 	ResourceBlob CreateUploadBuffer(UINT64 size);
 	void CommitChange();
+	void Flush();
 	void PostFlush();
+};
+class D3D12PaintContext :public RLL::IPaintContext
+{
+	friend class D3D12PaintDevice;
+	friend class D3D12FramePaintContext;
+	D3D12PaintDevice* device = nullptr;
+	std::vector<ResourceBlob> transformCache;
+	int cTransform;
+	std::vector<RLL::Rectangle> clips;
+	ComPtr<ID3D12CommandAllocator> cmdAllocator;
+	ComPtr<ID3D12GraphicsCommandList> cmdList;
+	ComPtr<ID3D12Resource> rt;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle;
+	bool flushAvaliable = false;
+	D3D12_RESOURCE_STATES state;
+	CD3DX12_VIEWPORT viewport;
+	CD3DX12_RECT scissorRect;
+	ResourceBlob gpuCbFrame;
+	ResourceBlob gpuCbObject;
+	CBFrame cbFrame;
+	CBObject cbObjTest;
 
-	void DrawCanvas();
+	D3D12PaintContext(D3D12PaintDevice* pdev);
+	void Dispose() { NOIMPL; };
+public:
+	RLL::IPaintDevice* GetDevice() { return device; };
+	void SetRenderTarget(RLL::IRenderTarget* rt);
+	//virtual ITexture* GetRenderTarget() = 0;
+	void BeginDraw();
+	void Clear(RLL::Color clear = {});
+	void PushClip(RLL::Rectangle clip);
+	void PopClip();
+	void EndDraw();
+	void SetTransform(Math3D::Matrix4x4& tfCache);
 	void DrawSVG(RLL::ISVG* svg);
-	void DrawGeometry(RLL::IGeometry* geom, RLL::IBrush* br = nullptr, Math3D::Matrix4x4* transform = nullptr);
+	void DrawMorph() { NOIMPL; };
+
+};
+class D3D12FramePaintContext :public D3D12PaintContext
+{
+	friend class D3D12PaintDevice;
+	D3D12FramePaintContext(D3D12PaintDevice* pdev);
+
+public:
+	void SetRenderTarget(RLL::IRenderTarget* rt) { SetError("Frame Context dose not need to set RenderTargets."); };
+	void BeginDraw();
+	void Clear(RLL::Color clear = {});
+	void EndDraw();
 
 };
 
@@ -492,3 +582,5 @@ public:
 	RLL::ISVG* Commit();
 	void Dispose();
 };
+
+void InitatePaint(int flags);

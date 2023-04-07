@@ -5,16 +5,16 @@
 
 namespace util
 {
-	Math3D::Vector2 Lerp(float t, Math3D::Vector2 a, Math3D::Vector2 b)
+	inline Math3D::Vector2 Lerp(float t, Math3D::Vector2 a, Math3D::Vector2 b)
 	{
 		return a + (b - a) * t;
 	}
-	Math3D::Vector2 QuadraticBezier(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
+	inline Math3D::Vector2 QuadraticBezier(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
 	{
 		return Lerp(t, Lerp(t, b, c), Lerp(t, c, e));
 		// = b+(c-b)*t + c+(e-c)*t
 	}
-	Math3D::Vector2 QuadraticBezierTangent(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
+	inline Math3D::Vector2 QuadraticBezierTangent(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
 	{
 		return  (Lerp(t, c, e) - Lerp(t, b, c)) * 2;
 		//= c + (e - c) * t - ( b + (c - b) * t) 
@@ -23,22 +23,22 @@ namespace util
 		//*2 = 2 * t(e - 2c + b) + 2c - 2b
 		//' = 2(e - 2c + b)
 	}
-	Math3D::Vector2 dQBezierTangent(Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
+	inline Math3D::Vector2 dQBezierTangent(Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
 	{
 		return (e - c * 2 + b) * 2;
 	}
-	float CurvatureQBezier(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
+	inline float CurvatureQBezier(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
 	{
 		auto dC = QuadraticBezierTangent(t, b, c, e);
 		auto ddC = dQBezierTangent(b, c, e);
 		float k = abs(dC.x * ddC.y - dC.y * ddC.x) / pow(dC.x * dC.x + dC.y * dC.y, 1.5f);
 		return k;
 	}
-	Math3D::Vector2 CubicBezier(float t, Math3D::Vector2 b, Math3D::Vector2 c1, Math3D::Vector2 c2, Math3D::Vector2 e)
+	inline Math3D::Vector2 CubicBezier(float t, Math3D::Vector2 b, Math3D::Vector2 c1, Math3D::Vector2 c2, Math3D::Vector2 e)
 	{
 		return Lerp(t, QuadraticBezier(t, b, c1, c2), QuadraticBezier(t, c1, c2, e));
 	}
-	void TrianglePPTT(
+	inline void TrianglePPTT(
 		Math3D::Vector2 pb, Math3D::Vector2 pe,
 		Math3D::Vector2 tb, Math3D::Vector2 te,
 		Math3D::Vector2& c)
@@ -54,7 +54,7 @@ namespace util
 		c = pb + tb.Normalized() * bc_l;
 	}
 
-	float MaximalResolve(std::function<float(float)> eq, float mi, float ma)
+	inline float MaximalResolve(std::function<float(float)> eq, float mi, float ma)
 	{
 		float ep = 0.0001f;
 		float l = mi; float r = ma;
@@ -72,7 +72,7 @@ namespace util
 		return 0.5f * (l + r);
 	}
 
-	float dCurQB(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
+	inline float dCurQB(float t, Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e)
 	{
 		auto dC = QuadraticBezierTangent(t, b, c, e);
 		auto ddC = dQBezierTangent(b, c, e);
@@ -81,27 +81,27 @@ namespace util
 		return u / v;
 	}
 
-	Math3D::Vector2 Ellipse(Math3D::Vector2 radius, float r)
+	inline Math3D::Vector2 Ellipse(Math3D::Vector2 radius, float r)
 	{
 		return Math3D::Vector2(radius.x * cosf(r), radius.y * sinf(r));
 	}
 
-	float EllipseDistance(Math3D::Vector2 radius, float rad)
+	inline float EllipseDistance(Math3D::Vector2 radius, float rad)
 	{
 		return sqrtf(radius.x * cosf(rad) * radius.x * cosf(rad) + radius.y * radius.y * sinf(rad) * sinf(rad));
 	}
 
-	Math3D::Vector2 EllipseTangent(Math3D::Vector2 radius, float rad)
+	inline Math3D::Vector2 EllipseTangent(Math3D::Vector2 radius, float rad)
 	{
 		return Math3D::Vector2(radius.x * -sinf(rad), radius.y * cosf(rad));
 	}
-	Math3D::Vector2 Normal(Math3D::Vector2 v)
+	inline Math3D::Vector2 Normal(Math3D::Vector2 v)
 	{
 		return ((v)*Math3D::Matrix4x4::Rotation(0, 0, -3.1415926f / 2));
 	}
 
 	//return seg count
-	int QBezierExpand(Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e, float s,
+	inline int QBezierExpand(Math3D::Vector2 b, Math3D::Vector2 c, Math3D::Vector2 e, float s,
 		Math3D::Vector2* o_b, Math3D::Vector2* o_c, Math3D::Vector2* o_e)
 	{
 		auto maxt = util::MaximalResolve([&](float t) {return util::CurvatureQBezier(t, b, c, e); }, 0, 1);

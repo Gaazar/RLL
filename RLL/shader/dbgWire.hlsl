@@ -1,47 +1,11 @@
-cbuffer cbObject : register(b0)
-{
-	float4x4 objToWorld;
-	int sampleType;
-	float lerpTime;
-}
+#include "path.hlsli"
 
-// cbuffer cbPass :register(b1)
-//{
-//
-//
-// };
-
-cbuffer cbFrame : register(b1)
-{
-	float4x4 gWorldViewProj;
-	float4 dColor;
-	float time;
-	int2 vwh;
-	float reservedCBF;
-};
-
-
-
-struct VertexIn
-{
-	float3 PosL : POSITION;
-	float3 pnc : PNB; // path normal color
-
-	float2 uv : TEXCOORD;
-};
-
-struct VertexOut
-{
-	float4 PosH : SV_POSITION;
-	float2 uv : TEXCOORD;
-	nointerpolation float3 pnc : PNB;
-};
 VertexOut VS(VertexIn vin, uint id
 			 : SV_InstanceID)
 {
 	VertexOut vout;
 	float2 n = float2(cos(vin.pnc.y), sin(vin.pnc.y));
-	float3 p = vin.PosL;
+	float3 p = float3(vin.PosL,0);
 	float2 uv = vin.uv;
 	float4x4 m = mul(objToWorld, gWorldViewProj);
 

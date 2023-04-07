@@ -28,34 +28,17 @@ inline void SUCCESS(HRESULT hr)
 	if (hr != S_OK)
 		throw(hr);
 }
-
-class Frame : public RLL::IFrame
+class D3D12FramePaintContext;
+struct Frame : public RLL::IFrame
 {
 	DWORD extStyles = 0;
 	HWND hWnd;
-	ComPtr<ID3D12Fence> gFence;
-	ComPtr<ID3D12CommandQueue> cmdQueue;
-	ComPtr<ID3D12CommandAllocator> cmdAllocator;
-	ComPtr<ID3D12GraphicsCommandList> cmdList;
-	ComPtr<IDXGISwapChain1> swapChain;
-	ComPtr<IDCompositionTarget> dcompTarget;
-	ComPtr<IDCompositionVisual> dcompVisual;
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	ComPtr<ID3D12Resource> scBuffer[2];
-	ComPtr<ID3D12Resource> maBuffer[2];
-	UINT rtvDescriptorSize;
-	int currentBuffer = 0;
-	int cFence = 0;
-
-	CD3DX12_VIEWPORT viewport;
-	CD3DX12_RECT scissorRect;
+	D3D12FramePaintContext* paintCtx;
+	RLL::RectangleI viewRect;
 
 	Math3D::Vector4 AquireWindowRect();
 	void SetViewRect(RECT&);
-	void FlushCommandQueue();
-	void ResizeView();
-	void CreateRenderTargets();
-public:
+
 	Frame(Frame* parent, Math3D::Vector2 size, Math3D::Vector2 pos);
 	LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 	LRESULT NextProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
@@ -63,11 +46,6 @@ public:
 	void Run();
 };
 
-struct PathBuffer;
-
-ID3D12Device5* GetD3DDevice();
-IDCompositionDevice* GetDCompDevice();
-PathBuffer* GetPathBuffer();
 struct ResourceBlob
 {
 	int size;

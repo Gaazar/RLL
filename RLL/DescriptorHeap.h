@@ -44,4 +44,8 @@ public:
 	{
 		return &heap;
 	}
+	inline void Reset()
+	{
+		heap.Reset();
+	}
 };

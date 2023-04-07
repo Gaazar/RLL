@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 // return us
-float GetTime();
-void TimeCheck(char* name);
-void TimeCheckSum();
+inline float GetTime();
+inline void TimeCheck(char* name);
+inline void TimeCheckSum();
 #else
 #define GetTime(...)
 #define TimeCheck(...)

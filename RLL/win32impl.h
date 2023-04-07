@@ -13,4 +13,6 @@ namespace RLL
 	Math3D::Vector2 GetScale();
 	IFrame* CreateFrame(IFrame* parent, Math3D::Vector2 size, Math3D::Vector2 pos);
 
+	IPaintDevice* CreatePaintDeviceForFrame(IFrame* f);
+
 }

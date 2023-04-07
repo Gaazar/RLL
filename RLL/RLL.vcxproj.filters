@@ -52,6 +52,18 @@
     <ClCompile Include="perf_util.cpp">
       <Filter>src\win32impl</Filter>
     </ClCompile>
+    <ClCompile Include="win32paint_d12device.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="win32paint_d12geometry.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="win32paint_d12svg.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
+    <ClCompile Include="win32paint_d12context.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Metrics.h">
