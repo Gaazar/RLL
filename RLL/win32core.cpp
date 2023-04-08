@@ -107,8 +107,8 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	AquireWindowRect();
 
 	//TestField.
-	paintDevice = CreatePaintDeviceForFrame(this);
-	paintDevice->ResizeView(RLL::SizeI(viewRect.right - viewRect.left, viewRect.bottom - viewRect.top));
+	paintDevice = RLL::CreatePaintDevice();
+	paintCtx = (D3D12FramePaintContext*)paintDevice->CreateContextForFrame(this);
 
 	auto ffact = RLL::CreateFontFactory(paintDevice);
 	auto fc_tms = ffact->LoadFromFile("c:/windows/fonts/times.ttf");
@@ -149,7 +149,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	sb->Reset();
 	auto svg_sbk = (D3D12SVG*)hb_test(fc_khm, sb, L"ញុំបានមើ khmer");//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"中字默一十川七八毫");//ញុំបានមើ khmer
+	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"雅黑。这次职业生涯规划生涯人物访谈，中字默一十川七八毫");//ញុំបានមើ khmer
 	sb->Reset();
 	auto svg_sbcs = (D3D12SVG*)hb_test(fc_sun, sb, L"宋体。这次职业生涯规划生涯人物访谈，中字默一十川七八毫");//ញុំបានមើ khmer
 	sb->Reset();
@@ -157,7 +157,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	sb->Reset();
 	auto svg_dsm = (D3D12SVG*)hb_test(fc_dsm, sb, L"Latin series TrueType DroidSansMono.");
 	sb->Reset();
-	auto svg_heb = (D3D12SVG*)hb_test(fc_tms, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية");
+	auto svg_heb = (D3D12SVG*)hb_test(fc_tms, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية, All 12pt");
 	sb->Reset();
 	auto svg_emj = (D3D12SVG*)hb_test(fc_emj, sb, L"🧑🧑🏻🧑🏼🧑🏽🧑🏾🧑🏿🥵😰");
 
@@ -241,7 +241,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	sb->Push(go_geo, br_yg_tex, &(Matrix4x4::Translation({ -180,-150 })));
 
 	cm_t_cir = sb->Commit();
-
+	paintCtx->Flush();
 	//rbo_glyph = paintDevice->CreateUploadBuffer(sizeof(CBObject));
 	//rbo_circ = paintDevice->CreateUploadBuffer(sizeof(CBObject));
 	//rbf_root = paintDevice->CreateUploadBuffer(sizeof(CBFrame));
@@ -262,8 +262,6 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	//rbo_glyph.Sync(cbo_t_glyph);
 	//rbo_circ.Sync(cbo_t_circ);
 	//rbf_root.Sync(cbf_root);
-	paintCtx = (D3D12FramePaintContext*)paintDevice->CreateContext(FLAG_D12PC_FRAME_CONTEXT);
-	paintDevice->Flush();
 }
 LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -304,7 +302,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		paintCtx->SetTransform(vtf);
 		paintCtx->DrawSVG(cm_t_cir);
 		paintCtx->EndDraw();
-		paintDevice->Flush();
+		paintCtx->Flush();
 		//SUCCESS(dCompDevice->Commit());
 		break;
 	}
@@ -312,7 +310,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		if (paintDevice)
 		{
 			AquireWindowRect();
-			paintDevice->ResizeView(RLL::SizeI(viewRect.right - viewRect.left, viewRect.bottom - viewRect.top));
+			paintCtx->ResizeView();
 		}
 		break;
 	case WM_MOUSEMOVE:

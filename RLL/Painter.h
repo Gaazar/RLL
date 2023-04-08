@@ -104,12 +104,13 @@ namespace RLL
 		virtual ISVGBuilder* CreateSVGBuilder() = 0;
 
 		virtual IPaintContext* CreateContext(int flags) = 0;
+		virtual RLL::IPaintContext* CreateContextForFrame(RLL::IFrame* f, int flags = 0) = 0;
 
 		virtual void CopyTexture(ITexture* src, ITexture* dst) = 0;
 		virtual void CopyTextureRegion(ITexture* src, ITexture* dst, RectangleI) = 0;
 
-		virtual void Flush() = 0;
-		virtual void ResizeView(SizeI& r) = 0;
+		//virtual void Flush() = 0;
+		//virtual void ResizeView(SizeI& r) = 0;
 	};
 	class IPaintContext : public IBase
 	{
@@ -126,6 +127,7 @@ namespace RLL
 		virtual void SetTransform(Math3D::Matrix4x4& tfCache) = 0;
 		virtual void DrawSVG(ISVG* svg) = 0;
 		virtual void DrawMorph() = 0;
+		virtual void Flush() = 0;
 		//virtual void DrawGeometry(IGeometry* geom) = 0;
 
 	};

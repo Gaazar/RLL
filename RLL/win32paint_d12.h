@@ -305,17 +305,10 @@ class D3D12PaintDevice : public RLL::IPaintDevice
 	friend class D3D12SVGBuilder;
 	friend class CoreMesh;
 	friend class D3D12Geometry;
+	friend class D3D12SVG;
+	friend class D3D12PaintContext;
+	friend class D3D12FramePaintContext;
 
-	UINT msaaQuality;
-	void UploadMesh(CoreMesh* m);
-	ID3D12Resource* MakeDefaultBuffer(ID3D12Resource* upload, int size);
-	int AllocateBrush();
-	int AllocatePath(D3D12GPUPath&);
-	int AllocateMesh();
-	void LoadShaders();
-	void CreateRenderTargets();
-
-public:
 	int flag = 0b111;
 	ComPtr < ID3D12Device5> d3dDevice = nullptr;
 
@@ -326,12 +319,8 @@ public:
 	ComPtr<ID3D12GraphicsCommandList> cmdList;
 	//ComPtr<ID3D12CommandAllocator> cmdAllocatorCopy;
 	//ComPtr<ID3D12CommandList> cmdListCopy;
-	ComPtr<IDXGISwapChain1> swapChain;
-	ComPtr<IDCompositionTarget> dcompTarget;
-	ComPtr<IDCompositionVisual> dcompVisual;
-	DescriptorHeap rtvHeap;
-	ComPtr<ID3D12Resource> scBuffer[2];
-	ComPtr<ID3D12Resource> maBuffer[2];
+	ComPtr<IDXGIDevice1> dxgiDevice;
+	ComPtr<IDXGIFactory5> dxgiFactory;
 
 	ComPtr<ID3D12RootSignature> coreSignature;
 	ComPtr<ID3D12PipelineState> corePSO;
@@ -347,22 +336,24 @@ public:
 	ComPtr<ID3D12Resource> gpuCurve;
 	ComPtr<ID3D12Resource> gpuBrush;
 	DescriptorHeap gpuTextureHeap;
-
-	ComPtr<IDCompositionDevice> dCompDevice;
-	ComPtr<IDXGIDevice1> dxgiDevice;
-	ComPtr<IDXGIFactory5> dxgiFactory;
-
-	CD3DX12_VIEWPORT viewport;
-	CD3DX12_RECT scissorRect;
-	UINT rtvDescriptorSize;
 	bool msaaEnable = false;
-	UINT currentBuffer;
+	UINT msaaQuality;
 
-
-	D3D12PaintDevice();
-	D3D12PaintDevice(RLL::IFrame*);
 	void CreateDevices(int flags);
-	void ResizeView(RLL::SizeI& r);
+	void CommitChange();
+	//void Flush();
+	void PostFlush();
+	void UploadMesh(CoreMesh* m);
+	ID3D12Resource* MakeDefaultBuffer(ID3D12Resource* upload, int size);
+	int AllocateBrush();
+	int AllocatePath(D3D12GPUPath&);
+	int AllocateMesh();
+	void LoadShaders();
+	void Wait();
+
+
+public:
+	D3D12PaintDevice();
 
 	void Dispose() { NOIMPL; };
 	RLL::IBrush* CreateSolidColorBrush(RLL::Color c);
@@ -379,7 +370,8 @@ public:
 	RLL::IGeometryBuilder* CreateGeometryBuilder();
 	RLL::ISVGBuilder* CreateSVGBuilder();
 
-	RLL::IPaintContext* CreateContext(int flags);
+	RLL::IPaintContext* CreateContext(int flags = 0);
+	RLL::IPaintContext* CreateContextForFrame(RLL::IFrame* f, int flags = 0);
 
 	void CopyTexture(RLL::ITexture* src, RLL::ITexture* dst) { NOIMPL; return; };
 	void CopyTextureRegion(RLL::ITexture* src, RLL::ITexture* dst, RLL::RectangleI) { NOIMPL; return; };
@@ -387,9 +379,6 @@ public:
 
 	ID3D12Resource* CreateDefaultBuffer(const void* initData, UINT64 size, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 	ResourceBlob CreateUploadBuffer(UINT64 size);
-	void CommitChange();
-	void Flush();
-	void PostFlush();
 };
 class D3D12PaintContext :public RLL::IPaintContext
 {
@@ -426,18 +415,38 @@ public:
 	void SetTransform(Math3D::Matrix4x4& tfCache);
 	void DrawSVG(RLL::ISVG* svg);
 	void DrawMorph() { NOIMPL; };
+	void Flush();
 
 };
 class D3D12FramePaintContext :public D3D12PaintContext
 {
 	friend class D3D12PaintDevice;
-	D3D12FramePaintContext(D3D12PaintDevice* pdev);
+
+	ComPtr<IDXGISwapChain1> swapChain;
+	ComPtr<IDCompositionTarget> dcompTarget;
+	ComPtr<IDCompositionVisual> dcompVisual;
+	DescriptorHeap rtvHeap;
+	ComPtr<ID3D12Resource> scBuffer[2];
+	ComPtr<ID3D12Resource> maBuffer[2];
+	ComPtr<IDCompositionDevice> dCompDevice;
+
+	CD3DX12_VIEWPORT viewport;
+	CD3DX12_RECT scissorRect;
+	UINT rtvDescriptorSize;
+	UINT currentBuffer;
+	Frame* frame;
+
+
+	D3D12FramePaintContext(D3D12PaintDevice* pdev, Frame* f);
+	void CreateRenderTargets();
 
 public:
+	void ResizeView();
 	void SetRenderTarget(RLL::IRenderTarget* rt) { SetError("Frame Context dose not need to set RenderTargets."); };
 	void BeginDraw();
 	void Clear(RLL::Color clear = {});
 	void EndDraw();
+	void Flush();
 
 };
 
