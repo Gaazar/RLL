@@ -10,6 +10,7 @@
 #include "unicode/ubidi.h"
 #include "unicode/ustring.h"
 #include "unicode/uscript.h"
+#include "unicode/brkiter.h"
 
 #include "perf_util.h"
 
@@ -44,11 +45,37 @@ RLL::ISVG* hb_test(RLL::IFontFace* ff, RLL::ISVGBuilder* sb, wchar_t* tex)
 	hb_position_t cursor_y = 0;
 	//hb_buffer_guess_segment_properties(buf);
 	auto font = hb_ft_font_create_referenced(f->face);
-
 	UChar* ucs = new UChar[wcslen(tex) + 1];
 	int32_t tsl = 0;
 	UErrorCode uec = U_ZERO_ERROR;
 	u_strFromWCS(ucs, wcslen(tex) + 1, &tsl, tex, -1, &uec);
+
+	auto utx = utext_openUChars(nullptr, ucs, tsl, &uec);
+
+
+	auto brki = icu::BreakIterator::createLineInstance(icu::Locale::getDefault(), uec);
+	brki->setText(utx, uec);
+
+	int32_t p = brki->first();
+	setlocale(LC_ALL, "");
+	int32_t p_l = p;
+	printf("%ls\n", tex);
+	while (p != icu::BreakIterator::DONE) {
+		//printf("Boundary at position %d\n", p);
+		if (p_l != p)
+		{
+			UChar* word = new UChar[p - p_l + 1]{0};
+			utext_extract(utx, p_l, p, word, 999999, &uec);
+			printf("%ls|", word);
+			delete[] word;
+		}
+		p_l = p;
+		p = brki->next();
+	}
+	printf("\n");
+	delete brki;
+	utext_close(utx);
+
 	UBiDi* bidi = ubidi_open();
 	UBiDiLevel bidiReq = UBIDI_DEFAULT_LTR;
 	int stringLen = wcslen(tex);
@@ -57,9 +84,8 @@ RLL::ISVG* hb_test(RLL::IFontFace* ff, RLL::ISVGBuilder* sb, wchar_t* tex)
 		ubidi_setPara(bidi, ucs, stringLen, bidiReq, NULL, &status);
 
 		if (U_SUCCESS(status)) {
-			int paraDir = ubidi_getParaLevel(bidi);
+			//int paraDir = ubidi_getParaLevel(bidi);
 			size_t rc = ubidi_countRuns(bidi, &status);
-
 			for (size_t i = 0; i < size_t(rc); ++i) {
 
 				hb_buffer_t* buf = hb_buffer_create();;
@@ -72,8 +98,8 @@ RLL::ISVG* hb_test(RLL::IFontFace* ff, RLL::ISVGBuilder* sb, wchar_t* tex)
 				u_strToUTF32(&c32, 1, nullptr, &ucs[startRun], 1, &status);
 				auto sc = uscript_getScript(c32, &status);
 				bool isRTL = (runDir == UBIDI_RTL);
-				printf("Processing Bidi Run = %d -- run-start = %d, run-len = %d, isRTL = %d\n",
-					i, startRun, lengthRun, isRTL);
+				//printf("Processing Bidi Run = %d -- run-start = %d, run-len = %d, isRTL = %d\n",
+				//	i, startRun, lengthRun, isRTL);
 				hb_buffer_add_utf16(buf, (uint16_t*)ucs, -1, startRun, lengthRun);
 
 				hb_buffer_set_direction(buf, isRTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
@@ -88,6 +114,7 @@ RLL::ISVG* hb_test(RLL::IFontFace* ff, RLL::ISVGBuilder* sb, wchar_t* tex)
 				//TimeCheck("Getglyf start");
 
 				for (unsigned int i = 0; i < glyph_count; i++) {
+					auto& info = glyph_info[i];
 					hb_codepoint_t glyphid = glyph_info[i].codepoint;
 					hb_position_t x_offset = glyph_pos[i].x_offset;
 					hb_position_t y_offset = glyph_pos[i].y_offset;

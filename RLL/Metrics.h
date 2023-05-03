@@ -1,7 +1,7 @@
 #pragma once
 #include "math3d/Math3Df.h"
 #ifdef _DEBUG
-#define NOIMPL std::cout << __FILE__ << "\tline:" << __LINE__ << "\t" << __FUNCTION__ << " not implemented yet." << std::endl;
+#define NOIMPL std::cout <<"[NOIMPL]\t"<< __FILE__ << "\tline:" << __LINE__ << "\t" << __FUNCTION__ << " not implemented yet." << std::endl;
 #else
 #define NOIMPL
 #endif
@@ -31,6 +31,21 @@ namespace RLL
 		AXIS_SPACE_BETWEEN,
 		AXIS_SPACE_AROUND
 	};
+	enum LINE_ALIGN
+	{
+		LINE_ALIGN_START,
+		LINE_ALIGN_END,
+		LINE_ALIGN_BASELINE,
+		LINE_ALIGN_CENTER,
+		LINE_ALIGN_STRETCH,
+	};
+	enum PARA_ALIGN
+	{
+		PARA_ALIGN_START,
+		PARA_ALIGN_END,
+		PARA_ALIGN_CENTER,
+		PARA_ALIGN_STRETCH,
+	};
 	struct Axis {
 		AXIS_DIR direction;
 		AXIS_SPACE space;
@@ -46,17 +61,19 @@ namespace RLL
 	struct CharMetrics
 	{
 		Math3D::Vector2 offset;
-		Math3D::Vector2 size;
 		Math3D::Vector2 advance;
 		float ascender, decender;
 	};
+	struct PharaseMetrics
+	{
 
+	};
 	struct BlockMetrics
 	{
-		Math3D::Vector4 margin;
-		Math3D::Vector4 border;
-		Math3D::Vector4 padding;
-		Math3D::Vector4 content;
+		Math3D::float4 margin;
+		Math3D::float4 border;
+		Math3D::float4 padding;
+		Math3D::float4 content;
 	};
 
 	struct LineMetrics
@@ -71,8 +88,20 @@ namespace RLL
 		Math3D::Vector2 minSize;
 		Math3D::Vector2 maxSize;
 		Math3D::Vector2 properSize;
+		float lineGap;
 	};
+	struct GlyphMetrics
+	{
+		Math3D::float2 size;
+		struct SpecialMetrics
+		{
+			Math3D::float2 offset;
+			float advance;
+		};
+		SpecialMetrics vertical;
+		SpecialMetrics horizontal;
 
+	};
 	struct SizeI
 	{
 		int x = 0, y = 0;
@@ -91,7 +120,16 @@ namespace RLL
 
 	struct Size :public Math3D::Vector2
 	{
-		Size() = default;
+		Size() 
+		{
+			x = 0;
+			y = 0;
+		}
+		Size(float x, float y)
+		{
+			this->x = x;
+			this->y = y;
+		}
 		Size(SizeI& s)
 		{
 			x = s.x;

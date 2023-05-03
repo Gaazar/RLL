@@ -103,6 +103,17 @@ namespace RLL
 			}
 		} frameMove;
 	};
+	class IFrame;
+	class IPaintDevice;
+	void Initiate(int flag = 0);
+	int GetFlags();
+	wchar_t* GetLocale();
+	Math3D::Vector2 GetScale();
+	IFrame* CreateFrame(IFrame* parent, Math3D::Vector2 size, Math3D::Vector2 pos);
+
+	IPaintDevice* CreatePaintDevice();
+
+
 	class View
 	{
 		void* EventProcess(EVENT_TYPE, EventArgs)
@@ -123,9 +134,9 @@ namespace RLL
 		virtual void Dispose() = 0;
 		char* error = nullptr;
 	protected:
-		void SetError(char* e) 
+		void SetError(char* e)
 		{
-			error = e; 
+			error = e;
 			std::cout << this << ":\t" << error << std::endl;
 		};
 	public:

@@ -362,10 +362,8 @@ public:
 	RLL::IBrush* CreateSweepBrush(Math3D::Vector2 center, float degree, RLL::ColorGradient* grad);
 	RLL::IBrush* CreateTexturedBrush(RLL::ITexture* tex, void* sampleMode) { NOIMPL; return nullptr; };
 	RLL::ITexture* CreateTexture() { NOIMPL; return nullptr; };
+	RLL::ITexture* CreateTexture(RLL::IBitmap* bmp) { NOIMPL; return nullptr; };
 	RLL::IRenderTarget* CreateRenderTarget() { NOIMPL; return nullptr; };
-	RLL::ITexture* CreateTextureFromFile() { NOIMPL; return nullptr; };
-	RLL::ITexture* CreateTextureFromStream() { NOIMPL; return nullptr; };
-	RLL::ITexture* CreateTextureFromMemory() { NOIMPL; return nullptr; };
 
 	RLL::IGeometryBuilder* CreateGeometryBuilder();
 	RLL::ISVGBuilder* CreateSVGBuilder();

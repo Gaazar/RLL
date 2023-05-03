@@ -134,13 +134,13 @@ uint32_t FTFace::GetCodepoint(char32_t unicode)
 	return FT_Get_Char_Index(face, unicode);
 }
 
-RLL::IGeometry* FTFace::GetPlainGlyph(char32_t unicode)
+RLL::IGeometry* FTFace::GetPlainGlyph(char32_t unicode, RLL::GlyphMetrics* metrics)
 {
 	auto glyph_index = FT_Get_Char_Index(face, unicode);
 	if (glyph_index == 0) return nullptr;
-	return GetPlainGlyph(glyph_index);
+	return GetPlainGlyph(glyph_index, metrics);
 }
-RLL::IGeometry* FTFace::GetPlainGlyph(uint32_t codepoint)
+RLL::IGeometry* FTFace::GetPlainGlyph(uint32_t codepoint, RLL::GlyphMetrics* metrics)
 {
 	auto hr = FT_Load_Glyph(face, codepoint, FT_LOAD_COLOR | FT_LOAD_NO_SCALE);
 	auto& gol = face->glyph->outline;
@@ -152,16 +152,37 @@ RLL::IGeometry* FTFace::GetPlainGlyph(uint32_t codepoint)
 	dp.gb->End(false);
 	auto res = dp.gb->Fill();
 	dp.gb->Release();
+	GetMetrics(metrics);
 	return res;
 
 }
+void FTFace::GetMetrics(RLL::GlyphMetrics* met)
+{
+	if (met)
+	{
+		Math3D::Vector2 scale(
+			face->units_per_EM,
+			face->units_per_EM);
 
-RLL::ISVG* FTFace::GetGlyph(char32_t unicode)
+		auto& m = face->glyph->metrics;
+		met->horizontal.offset.x = m.horiBearingX / scale.x;
+		met->horizontal.offset.y = m.horiBearingY / scale.y;
+		met->horizontal.advance = m.horiAdvance / scale.x;
+		met->vertical.offset.x = m.vertBearingX / scale.x;
+		met->vertical.offset.y = m.vertBearingY / scale.y;
+		met->vertical.advance = m.vertAdvance / scale.y;
+
+		met->size.x = m.width / scale.x;
+		met->size.y = m.height / scale.y;
+	}
+
+}
+RLL::ISVG* FTFace::GetGlyph(char32_t unicode, RLL::GlyphMetrics* metrics)
 {
 	auto glyph_index = FT_Get_Char_Index(face, unicode);
-	return GetGlyph(glyph_index);
+	return GetGlyph(glyph_index, metrics);
 }
-RLL::ISVG* FTFace::GetGlyph(uint32_t codepoint)
+RLL::ISVG* FTFace::GetGlyph(uint32_t codepoint, RLL::GlyphMetrics* metrics)
 {
 	TimeCheck("GetGlyph Begin");
 	auto glyph_index = codepoint;
@@ -169,6 +190,8 @@ RLL::ISVG* FTFace::GetGlyph(uint32_t codepoint)
 	{
 		TimeCheck("GetGlyph done. Cache hit.");
 		TimeCheckSum();
+		FT_Load_Glyph(face, codepoint, FT_LOAD_COLOR | FT_LOAD_NO_SCALE);
+		GetMetrics(metrics);
 		return cache_svg[glyph_index];
 	}
 	DecompParam dp;
@@ -212,6 +235,7 @@ RLL::ISVG* FTFace::GetGlyph(uint32_t codepoint)
 	{
 		//TimeCheck("GetGlyph no layered entry.");
 		auto hr = FT_Load_Glyph(face, glyph_index, FT_LOAD_COLOR | FT_LOAD_NO_SCALE);
+		GetMetrics(metrics);
 		auto& gol = face->glyph->outline;
 		if (gol.n_contours == 0)
 		{
@@ -241,11 +265,16 @@ RLL::ISVG* FTFace::GetGlyph(uint32_t codepoint)
 	{
 		res = sb->Commit();
 		//TimeCheck("GetGlyph layered svg commited.");
+		FT_Load_Glyph(face, glyph_index, FT_LOAD_COLOR | FT_LOAD_NO_SCALE);
+		GetMetrics(metrics);
 	}
 	dp.gb->Release();
 	sb->Release();
 	cache_svg[glyph_index] = res;
+
+
 	TimeCheck("GetGlyph done.");
 	TimeCheckSum();
 	return  res;
 }
+

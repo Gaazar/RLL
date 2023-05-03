@@ -28,13 +28,14 @@ public:
 	RLL::ISVG** cache_svg;
 
 	void Load();
-	void Dispose() {};
+	void Dispose() { NOIMPL; };
+	void GetMetrics(RLL::GlyphMetrics* met);
 
 public:
 	void SetLevel() { NOIMPL; };
 	uint32_t GetCodepoint(char32_t unicode);
-	RLL::IGeometry* GetPlainGlyph(char32_t unicode);
-	RLL::IGeometry* GetPlainGlyph(uint32_t codepoint);
-	RLL::ISVG* GetGlyph(char32_t unicode);
-	RLL::ISVG* GetGlyph(uint32_t codepoint);
+	RLL::IGeometry* GetPlainGlyph(char32_t unicode, RLL::GlyphMetrics* metrics = nullptr);
+	RLL::IGeometry* GetPlainGlyph(uint32_t codepoint, RLL::GlyphMetrics* metrics = nullptr);
+	RLL::ISVG* GetGlyph(char32_t unicode, RLL::GlyphMetrics* metrics);
+	RLL::ISVG* GetGlyph(uint32_t codepoint, RLL::GlyphMetrics* metrics);
 };

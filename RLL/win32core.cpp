@@ -3,8 +3,10 @@
 #include "DirectXColors.h"
 #include "fi_ft.h"
 #include "rlltest.h"
+#include "TextInterfaces.h"
 
 using namespace Math3D;
+using namespace RLL;
 #define ARRLEN(x) (sizeof(x)/sizeof(*x))
 #define SHADER_CORE L"shader\\core.hlsl"
 #define MSAA 0
@@ -16,6 +18,7 @@ RLL::IPaintDevice* paintDevice;
 //TestField
 RLL::ISVG* cm_t_glfs;
 RLL::ISVG* cm_t_cir;
+RLL::ISVG* cm_t_tly;
 RLL::ISVGBuilder* sb;
 RLL::IGeometryBuilder* gb;
 UINT m4xMsaaQuality;
@@ -119,6 +122,11 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	auto fc_khm = ffact->LoadFromFile("F:/libs/harfbuzz-5.3.1/test/subset/data/fonts/Khmer.ttf");
 	auto fc_sun = ffact->LoadFromFile("c:/windows/fonts/simsun.ttc");
 	auto fc_fsun = ffact->LoadFromFile("c:/windows/fonts/simfang.TTF");
+	auto fc_arial = ffact->LoadFromFile("c:/windows/fonts/arial.ttf");
+	auto fs_df = new IFontStack();
+	fs_df->Push(fc_emj);
+	fs_df->Push(fc_arial);
+	fs_df->Push(fc_msyh);
 	gb = paintDevice->CreateGeometryBuilder();
 	auto go = fc_msyh->GetGlyph(U'默');
 	gb->Reset();
@@ -141,23 +149,29 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	auto br_yg_tex = paintDevice->CreateRadialBrush({ 0.5,0.5 }, 1, &cg);
 	auto br_rec = paintDevice->CreateRadialBrush({ 0,0 }, 1, &cg);
 
+	auto tl = new TextLayout(L"\\אָלֶף־בֵּית 🧑🏿🥳עִבְרִי/ ltr🥵rtl \\اللغة العربية/TextLayout文本布局。Français Abc defgh a123c 1.234ff.\
+ nbsp left. done? emj😎🧑🏿🧑🏿🥳 ", { 300,50 }, fs_df);
+	//tl->Break();//TextLayout文本布局。Abc defgh a123c 1.234ff. nbsp left. done? emj😎🧑🏿🧑🏿
+	//tl->Metrics();
+	cm_t_tly = tl->Commit(paintDevice);
+	wchar_t* khm = L"אָלֶף־בֵּית";
 
 	sb = paintDevice->CreateSVGBuilder();
 	auto svg_sb = (D3D12SVG*)hb_test(fc_rob, sb, L"Roboto Regular. AWAVfifiifjflft. 中字默。abcDT");
 	sb->Reset();
-	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Times New Roman. AWAVfifiifjflft. 中字默。abcDT");
+	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Times New Roman. AWAVfifiifjflft. 中字默。abcDT nbsp 1 km/h");
 	sb->Reset();
 	auto svg_sbk = (D3D12SVG*)hb_test(fc_khm, sb, L"ញុំបានមើ khmer");//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"雅黑。这次职业生涯规划生涯人物访谈，中字默一十川七八毫");//ញុំបានមើ khmer
+	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"雅黑。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫");//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbcs = (D3D12SVG*)hb_test(fc_sun, sb, L"宋体。这次职业生涯规划生涯人物访谈，中字默一十川七八毫");//ញុំបានមើ khmer
+	auto svg_sbcs = (D3D12SVG*)hb_test(fc_sun, sb, L"宋体。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫");//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbcfs = (D3D12SVG*)hb_test(fc_fsun, sb, L"仿宋。这次职业生涯规划生涯人物访谈，中字默一十川七八毫");//ញុំបានមើ khmer
+	auto svg_sbcfs = (D3D12SVG*)hb_test(fc_fsun, sb, L"仿宋。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫");//ញុំបានមើ khmer
 	sb->Reset();
 	auto svg_dsm = (D3D12SVG*)hb_test(fc_dsm, sb, L"Latin series TrueType DroidSansMono.");
 	sb->Reset();
-	auto svg_heb = (D3D12SVG*)hb_test(fc_tms, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية, All 12pt");
+	auto svg_heb = (D3D12SVG*)hb_test(fc_arial, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية, All 12pt");
 	sb->Reset();
 	auto svg_emj = (D3D12SVG*)hb_test(fc_emj, sb, L"🧑🧑🏻🧑🏼🧑🏽🧑🏾🧑🏿🥵😰");
 
@@ -209,7 +223,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	gb->Ellipse({ 0,0.5 }, { 0.3,0.3 }, true);
 	gb->RoundRectangle({ -0.5,0.1 }, { 0.5,0.5 }, { 0.05,0.1 }, true);
 	go_geo = gb->Fill();
-	sb->Push(go_geo, nullptr, &(Matrix4x4::Scaling(90) * Matrix4x4::Translation({ 50,-250 })));
+	sb->Push(go_geo, nullptr, &(Matrix4x4::Scaling(90) * Matrix4x4::Translation({ -100,250 })));
 
 	gb->Reset();
 	gb->Begin({ 0,0 });
@@ -239,7 +253,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	//go_geo = gb->Stroke(5, nullptr);
 	//go_geo = gb->Fill(&Matrix4x4::Scaling({ 1.f / 200, 1.f / 200, 1 }));
 	sb->Push(go_geo, br_yg_tex, &(Matrix4x4::Translation({ -180,-150 })));
-
+	//sb->Push(svg_tly);
 	cm_t_cir = sb->Commit();
 	paintCtx->Flush();
 	//rbo_glyph = paintDevice->CreateUploadBuffer(sizeof(CBObject));
@@ -297,12 +311,13 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		//OutputDebugString(L"Paint\n");
 		paintCtx->BeginDraw();
 		paintCtx->Clear({ 1,1,1, 1.f });
-		paintCtx->SetTransform(Matrix4x4::Scaling({ 12 * 96 / 72 }) * vtf );
+		paintCtx->SetTransform(Matrix4x4::Scaling({ 12 * 96 / 72 }) * vtf);
 		paintCtx->DrawSVG(cm_t_glfs);
 		paintCtx->SetTransform(vtf);
 		paintCtx->DrawSVG(cm_t_cir);
+		paintCtx->SetTransform(Matrix4x4::Translation({ 0,-200,0 }) * vtf);
+		paintCtx->DrawSVG(cm_t_tly);
 		paintCtx->EndDraw();
-		paintCtx->Flush();
 		//SUCCESS(dCompDevice->Commit());
 		break;
 	}

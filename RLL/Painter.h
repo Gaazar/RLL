@@ -47,6 +47,14 @@ namespace RLL
 	};
 	class IGeometry;
 	class ISVG;
+	class IBitmap :public RLL::IBase
+	{
+	public:
+		void Dispose() { NOIMPL; };
+		RLL::SizeI GetSize();
+
+
+	};
 	class IGeometryBuilder : public IBase
 	{
 	public:
@@ -95,10 +103,8 @@ namespace RLL
 		virtual IBrush* CreateSweepBrush(Math3D::Vector2 center, float degree, ColorGradient* grad) = 0;
 		virtual IBrush* CreateTexturedBrush(ITexture* tex, void* sampleMode) = 0;
 		virtual ITexture* CreateTexture() = 0;
+		virtual ITexture* CreateTexture(RLL::IBitmap* bitmap) = 0;
 		virtual IRenderTarget* CreateRenderTarget() = 0;
-		virtual ITexture* CreateTextureFromFile() = 0;
-		virtual ITexture* CreateTextureFromStream() = 0;
-		virtual ITexture* CreateTextureFromMemory() = 0;
 
 		virtual IGeometryBuilder* CreateGeometryBuilder() = 0;
 		virtual ISVGBuilder* CreateSVGBuilder() = 0;

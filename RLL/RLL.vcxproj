@@ -148,6 +148,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FontStack.cpp" />
+    <ClCompile Include="TextLayout.cpp" />
     <ClCompile Include="win32paint_d12context.cpp" />
     <ClCompile Include="win32paint_d12device.cpp" />
     <ClCompile Include="win32paint_d12geometry.cpp" />

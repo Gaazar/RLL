@@ -64,6 +64,12 @@
     <ClCompile Include="win32paint_d12context.cpp">
       <Filter>src\win32impl</Filter>
     </ClCompile>
+    <ClCompile Include="TextLayout.cpp">
+      <Filter>src\shared</Filter>
+    </ClCompile>
+    <ClCompile Include="FontStack.cpp">
+      <Filter>src\shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Metrics.h">

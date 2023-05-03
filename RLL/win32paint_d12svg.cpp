@@ -111,8 +111,28 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 			{
 				pos.push_back(v.vertices[n] * i.transform);
 				uv.push_back(v.uvs[n]);
-				pnb.push_back(v.pnbs[n]);
-				tfs.push_back(v.tfs[n]);
+
+
+				auto normT = i.transform;
+				normT._41 = 0;
+				normT._42 = 0;
+				normT._43 = 0;
+
+				auto norm = Vector2(cosf(v.pnbs[n].y), sinf(v.pnbs[n].y));
+				norm = norm * normT;
+				auto ny = atan2f(norm.y, norm.x);
+				auto pnbT = v.pnbs[n];
+				pnbT.y = ny;
+				pnb.push_back(pnbT);
+
+				auto ruvT = Matrix4x4::Identity();
+				ruvT._11 = v.tfs[n].x;
+				ruvT._12 = v.tfs[n].y;
+				ruvT._21 = v.tfs[n].z;
+				ruvT._22 = v.tfs[n].w;
+				auto uvMat = (i.transform).Inversed() * ruvT;
+
+				tfs.push_back({ uvMat._11,uvMat._12,uvMat._21,uvMat._22 });
 			}
 			for (int n = 0; n < v.idxCount; n++)
 			{

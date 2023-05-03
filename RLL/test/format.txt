@@ -1,0 +1,64 @@
+language=c++
+{
+	#include "xxxx.h"
+}
+frame(width=800,height=600,style="uni",mvable,!sizable,id=xxx){
+	div()
+	{
+		title()
+		{
+		List display
+		}
+		{
+			"div(){text(weight=bold){to display a var name use \$ on left of the var.}}"
+			for(int i = 1;i <= 2; i++)
+			{
+				"div(){text(weight=bold){column$i}}"
+			}
+			for(auto i : list)
+			{
+				auto name = i.name.c_str();
+				auto age = i.age.c_str();
+				"div(){text(){$name} text(){age}}";
+			}
+		}
+	}
+}
+
+/*
+compiled content:
+
+#include "xxxx.h"
+int EnterPoint()
+{
+	auto frame_hexid = new Frame();
+	frame_hexid->width(800);
+	frame_hexid->height(600);
+	frame_hexid->style("uni")
+	frame_hexid->movable(true);
+	frame_hexid->sizable(false);
+	frame_hexid->id("xxx");
+
+	auto div_xxx = new Div();
+	frame_hexid->place(div_xxx);
+
+	auto title_xxx = new Title();
+	title_xxx->place("List display");
+
+	for(int i = 1;i <= 2; i++)
+	{
+		//"text(weight=bold){column$i}"
+		auto text_xx = new Text();
+		text_xx->weight("bold")
+		text_xx->plcae("column"+formatter(i));
+	}
+	for(auto i : list)
+	{
+		auto name = i.name.c_str();
+		auto age = i.age.c_str();
+		//"text(){$name} text(){age}";
+
+	}
+
+}
+*/

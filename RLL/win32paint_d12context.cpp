@@ -17,7 +17,8 @@ D3D12PaintContext::D3D12PaintContext(D3D12PaintDevice* pdev) : device(pdev)
 
 	gpuCbFrame = device->CreateUploadBuffer(sizeof(cbFrame));
 	gpuCbObject = device->CreateUploadBuffer(sizeof(cbObjTest));
-
+	"rll language  \
+c++ intergration lmao";
 
 	cbObjTest.objToWorld = Matrix4x4::Identity();
 
@@ -87,6 +88,8 @@ void D3D12PaintContext::EndDraw()
 	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, state));
 	cmdList->Close();
 	flushAvaliable = true;
+	Flush();
+
 }
 void D3D12PaintContext::SetTransform(Math3D::Matrix4x4& tfCache)
 {
@@ -242,7 +245,7 @@ void  D3D12FramePaintContext::Flush()
 	device->Wait();
 
 	device->PostFlush();
-}
+ }
 
 void D3D12FramePaintContext::BeginDraw()
 {
@@ -307,6 +310,7 @@ void D3D12FramePaintContext::EndDraw()
 	}
 	cmdList->Close();
 	flushAvaliable = true;
+	Flush();
 }
 
 void D3D12FramePaintContext::Clear(RLL::Color clear)
