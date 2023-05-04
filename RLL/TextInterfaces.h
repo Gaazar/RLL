@@ -7,6 +7,7 @@
 
 namespace RLL
 {
+	void TextLayoutInit();
 	class IFontFace;
 	class IFontFactory : public IBase
 	{
@@ -140,7 +141,7 @@ namespace RLL
 		{
 			Math3D::float2 size;
 			Math3D::float2 pxpem;
-			bool invDirection = false;
+			bool rtl = false;
 			UScriptCode script;
 			std::vector<Math3D::float2> glyfOffset;
 			std::vector<Math3D::float2> glyfScale;

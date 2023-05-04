@@ -117,7 +117,7 @@ void D3D12GeometryBuilder::Begin(Vector2 p)
 {
 	if (opening)
 	{
-		SetError("Can not end a non ended GeometryBuilder.");
+		SetError("Can not begin a non ended GeometryBuilder.");
 		return;
 	}
 	o = p;
@@ -134,6 +134,7 @@ void D3D12GeometryBuilder::End(bool close)
 	if (cPath.curves.size() == 0)
 	{
 		SetError("Empty GeometryBuilder. No path built.");
+		opening = false;
 		return;
 	}
 	if (close)

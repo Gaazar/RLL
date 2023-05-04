@@ -32,25 +32,26 @@ int dcomp_qbezier(const FT_Vector* control, const FT_Vector* to, void* p)
 		{ (float)control->x * s ,-(float)control->y * s },
 		{ (float)to->x * s ,-(float)to->y * s });
 	bd->index++;
+	//std::cout << "qb\t" << (float)control->x * s << "," << -(float)control->y * s << "; " << (float)to->x * s << "," << -(float)to->y * s << std::endl;
 	return 0;
 }
 int dcomp_mvto(const FT_Vector* pos, void* p)
 {
-	//std::cout << "mv\t" << fp(pos->x) << "," << fp(pos->y) << std::endl;
 	DecompParam* bd = (DecompParam*)p;
 	auto gb = bd->gb;
 	auto s = bd->scale;
 	if (bd->index != 0)
 	{
 		gb->End(false);
+		//bd->index = 0;
 	}
 	gb->Begin({ (float)pos->x * s, -(float)pos->y * s });
 	bd->index++;
+	//std::cout << "mv\t" << (float)pos->x * s << "," << -(float)pos->y * s << std::endl;
 	return 0;
 }
 int dcomp_lineto(const FT_Vector* to, void* p)
 {
-	//std::cout << "li\t" << fp(to->x) << "," << fp(to->y) << std::endl;
 	DecompParam* bd = (DecompParam*)p;
 	auto gb = bd->gb;
 	auto s = bd->scale;
@@ -60,6 +61,7 @@ int dcomp_lineto(const FT_Vector* to, void* p)
 	}
 	gb->LineTo({ (float)to->x * s ,-(float)to->y * s });
 	bd->index++;
+	//std::cout << "li\t" << (float)to->x * s << "," << -(float)to->y * s << std::endl;
 	return 0;
 }
 int dcomp_cbezier(const FT_Vector* c1, const FT_Vector* c2, const FT_Vector* to, void* p)
@@ -76,6 +78,7 @@ int dcomp_cbezier(const FT_Vector* c1, const FT_Vector* c2, const FT_Vector* to,
 		{ (float)to->x * s ,-(float)to->y * s }
 	);
 	bd->index++;
+	//std::cout << "cb\t" << (float)to->x * s << "," << -(float)to->y * s << std::endl;
 	return 0;
 }
 

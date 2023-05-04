@@ -70,6 +70,7 @@ void RLL::Initiate(int flags)
 	SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 
 	GetUserDefaultLocaleName(locale, sizeof(locale));
+	//TextLayoutInit();
 
 }
 int RLL::GetFlags()
@@ -123,10 +124,8 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	auto fc_sun = ffact->LoadFromFile("c:/windows/fonts/simsun.ttc");
 	auto fc_fsun = ffact->LoadFromFile("c:/windows/fonts/simfang.TTF");
 	auto fc_arial = ffact->LoadFromFile("c:/windows/fonts/arial.ttf");
-	auto fs_df = new IFontStack();
-	fs_df->Push(fc_emj);
-	fs_df->Push(fc_arial);
-	fs_df->Push(fc_msyh);
+	auto fc_nirm = ffact->LoadFromFile("c:/windows/fonts/Nirmala.ttf");
+	auto fc_leelw = ffact->LoadFromFile("c:/windows/fonts/LeelawUI.ttf");
 	gb = paintDevice->CreateGeometryBuilder();
 	auto go = fc_msyh->GetGlyph(U'默');
 	gb->Reset();
@@ -149,8 +148,20 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	auto br_yg_tex = paintDevice->CreateRadialBrush({ 0.5,0.5 }, 1, &cg);
 	auto br_rec = paintDevice->CreateRadialBrush({ 0,0 }, 1, &cg);
 
-	auto tl = new TextLayout(L"\\אָלֶף־בֵּית 🧑🏿🥳עִבְרִי/ ltr🥵rtl \\اللغة العربية/TextLayout文本布局。Français Abc defgh a123c 1.234ff.\
- nbsp left. done? emj😎🧑🏿🧑🏿🥳 ", { 300,50 }, fs_df);
+	auto fs_df = new IFontStack();
+	fs_df->Push(fc_emj);
+	fs_df->Push(fc_nirm);
+	fs_df->Push(fc_leelw);
+	fs_df->Push(fc_arial);
+	fs_df->Push(fc_msyh);
+
+	auto tl = new TextLayout(L"\
+TextLayout. 这次职业生涯规划。\
+Français Abc defgh a123c 1.234ff.\
+ nbsp left. done? emj\
+कोहियर से नमस्ते!😎🧑🏿🧑🏿🥳 |אָלֶף־בֵּית 🧑🏿🥳עִבְרִי/ ltr🥵rtl |اللغة العربية/\
+ Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่?"
+		, { 300,50 }, fs_df);
 	//tl->Break();//TextLayout文本布局。Abc defgh a123c 1.234ff. nbsp left. done? emj😎🧑🏿🧑🏿
 	//tl->Metrics();
 	cm_t_tly = tl->Commit(paintDevice);

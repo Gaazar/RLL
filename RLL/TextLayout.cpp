@@ -1,4 +1,4 @@
-#include "TextInterfaces.h"
+﻿#include "TextInterfaces.h"
 #include "fi_ft.h"
 
 #include "unicode/msvclib.h"
@@ -164,13 +164,13 @@ void TextLayout::Metrics()
 			assert(0);
 		}
 		auto f = dynamic_cast<FTFace*>(s.face);
-		auto hbf = hb_ft_font_create_referenced(f->face);
 		FT_Set_Char_Size(f->face, 72 * 64, 0, 32, 32);
 		Math3D::Vector2 scale(
 			f->face->size->metrics.x_scale / 65536.f * f->face->units_per_EM,
 			f->face->size->metrics.y_scale / 65536.f * f->face->units_per_EM);
 
 		size_t rc = ubidi_countRuns(bidi, &uec);
+		auto hbf = hb_ft_font_create_referenced(f->face);
 		for (size_t i = 0; i < size_t(rc); ++i) {
 
 			hb_buffer_t* buf = hb_buffer_create();;
@@ -183,15 +183,13 @@ void TextLayout::Metrics()
 			//u_strToUTF32(&c32, 1, nullptr, &s.ucs[startRun], 1, &uec);
 			//auto sc = uscript_getScript(c32, &uec);
 			bool isRTL = (runDir == UBIDI_RTL);
-			bp.script = s.script;
-			bp.invDirection = isRTL;
 			//printf("Processing Bidi Run = %d -- run-start = %d, run-len = %d, isRTL = %d\n",
 			//	i, startRun, lengthRun, isRTL);
 			hb_buffer_add_utf16(buf, (uint16_t*)s.ucs, s.len, startRun, lengthRun);
 
-			hb_buffer_set_direction(buf, isRTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
 			hb_buffer_set_script(buf, hb_icu_script_to_script(s.script));
-			hb_buffer_set_language(buf, hb_language_from_string("en-US", -1));
+			hb_buffer_set_direction(buf, isRTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+			hb_buffer_set_language(buf, hb_language_from_string("en", -1));
 
 			hb_shape(hbf, buf, NULL, 0);
 
@@ -203,8 +201,9 @@ void TextLayout::Metrics()
 			bp.pxpem = { 0,0 };
 			bp.glyfs.clear();
 			bp.glyfScale.clear();
-			//bp.glyfAdvance.clear();
 			bp.glyfOffset.clear();
+			bp.script = s.script;
+			bp.rtl = isRTL;
 			float szMax = 0; float szMin = 0;
 			Vector2 curs(0, 0);
 			for (unsigned int i = 0; i < glyph_count; i++) {
@@ -284,7 +283,7 @@ void TextLayout::Place(ISVGBuilder* sb)
 				{
 					if (parts[n].script != USCRIPT_COMMON)
 					{
-						befo = parts[n].invDirection;
+						befo = parts[n].rtl;
 						break;
 					}
 					n--;
@@ -294,20 +293,20 @@ void TextLayout::Place(ISVGBuilder* sb)
 				{
 					if (parts[n].script != USCRIPT_COMMON)
 					{
-						afte = parts[n].invDirection;
+						afte = parts[n].rtl;
 						break;
 					}
 					n++;
 				}
 				if (afte == befo)
-					parts[i].invDirection = afte;
+					parts[i].rtl = afte;
 				else
-					parts[i].invDirection = false;
+					parts[i].rtl = false;
 			}
 		}
 		for (auto i = 0; i < parts.size(); i++)
 		{
-			if (parts[i].invDirection)
+			if (parts[i].rtl)
 			{
 				if (inv == false)
 				{
@@ -399,4 +398,26 @@ void TextLayout::Dispose()
 {
 	delete[] text;
 	NOIMPL;
+}
+
+void RLL::TextLayoutInit() //abandoned
+{
+	//return;
+	hb_buffer_t* buf;
+	buf = hb_buffer_create();
+	hb_buffer_add_utf16(buf, (uint16_t*)L"اللغة العربية", -1, 0, -1);
+	hb_buffer_set_direction(buf, HB_DIRECTION_RTL);
+	hb_buffer_set_script(buf, HB_SCRIPT_ARABIC);
+	hb_buffer_set_language(buf, hb_language_from_string("en", -1));
+
+	hb_blob_t* blob = hb_blob_create_from_file("c:/windows/fonts/arial.ttf"); /* or hb_blob_create_from_file_or_fail() */
+	hb_face_t* face = hb_face_create(blob, 0);
+	hb_font_t* font = hb_font_create(face);
+
+	hb_shape(font, buf, NULL, 0);
+
+	hb_buffer_destroy(buf);
+	hb_font_destroy(font);
+	hb_face_destroy(face);
+	hb_blob_destroy(blob);
 }

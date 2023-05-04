@@ -149,7 +149,11 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 			break;
 		}
 	}
-
+	if (pos.size() < 3)
+	{
+		SetError("Invalid svg, vertices less than 3.");
+		return nullptr;
+	}
 	auto svg = new D3D12SVG(device);
 	svg->id = device->AllocateMesh();
 	auto corem = device->paths.meshes[svg->id];
