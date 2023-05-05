@@ -48,38 +48,67 @@ FTFace* GetFTFace(IFontFace* f, char16_t c)
 }
 void TextLayout::Break()
 {
-	split.clear();
-	std::vector<FontSplit> fs_ucs;
-	FTFace* ftf = GetFTFace(ffaces[-1], ((char16_t*)text)[0]);
-	int32_t b = 0;
+	std::vector<BreakPart> fs_bidi;
+	std::vector<BreakPart> fs_ucs;
+	std::vector<BreakPart> fs_script;
 	//hb_font_t* hbf = hb_ft_font_create_referenced(ftf->face);
-	FontSplit fs;
-	for (int i = 0; i < textLen; i++)
-	{
-		if (ftf != GetFTFace(ffaces[i], ((char16_t*)text)[i]))
-		{
-			if (i - b > 0)
-			{
-				fs.ucs = &((UChar*)text)[b];
-				fs.len = i - b;
-				fs.face = ftf;
-				fs_ucs.push_back(fs);
-			}
-			b = i;
-			ftf = GetFTFace(ffaces[i], ((char16_t*)text)[i]);
-		}
-	}
-	fs.ucs = &((UChar*)text)[b];
-	fs.len = textLen - b;
-	fs.face = ftf;
-	fs_ucs.push_back(fs);
-
+	BreakPart fs;
 	UErrorCode uec = U_ZERO_ERROR;
-	std::vector<FontSplit> fs_script;
+	UChar* uTex = (UChar*)text;
+	//break bidi
+	{
+		UBiDi* bidi = ubidi_open();
+		UBiDiLevel bidiReq = UBIDI_DEFAULT_LTR;
+		ubidi_setPara(bidi, uTex, textLen, bidiReq, NULL, &uec);
+		if (U_SUCCESS(uec)) {
+			//int paraDir = ubidi_getParaLevel(bidi);
+			size_t rc = ubidi_countRuns(bidi, &uec);
+			for (size_t i = 0; i < size_t(rc); ++i)
+			{
+				int32_t startRun = -1;
+				int32_t lengthRun = -1;
+				UBiDiDirection runDir = ubidi_getVisualRun(bidi, i, &startRun, &lengthRun);
+				fs.ucs = uTex + startRun;
+				fs.len = lengthRun;
+				fs.rtl = runDir == UBIDI_RTL;
+				fs_bidi.push_back(fs);
+			}
+		}
+		ubidi_close(bidi);
+	}
+	//break font styles
+	for (auto& s : fs_bidi)
+	{
+		fs = s;
+		auto j = s.ucs - uTex;
+		int32_t b = 0;
+		FTFace* ftf = GetFTFace(ffaces[j], ((char16_t*)s.ucs)[j]);
+		for (int i = 0; i < s.len; i++)
+		{
+			auto n = j + i;
+			if (ftf != GetFTFace(ffaces[n], ((char16_t*)s.ucs)[i]))
+			{
+				if (i - b > 0)
+				{
+					fs.ucs = &(s.ucs)[b];
+					fs.len = i - b;
+					fs.face = ftf;
+					fs_ucs.push_back(fs);
+				}
+				b = i;
+				ftf = GetFTFace(ffaces[n], ((char16_t*)s.ucs)[i]);
+			}
+		}
+		fs.ucs = &(s.ucs)[b];
+		fs.len = s.len - b;
+		fs.face = ftf;
+		fs_ucs.push_back(fs);
+	}
+
 	for (auto& i : fs_ucs)
 	{
 		fs = i;
-		b = 0;
+		int b = 0;
 		fs.script = USCRIPT_COMMON;
 		UChar32* uc32 = new UChar32[i.len];
 		u_strToUTF32(uc32, i.len, nullptr, i.ucs, i.len, &uec);
@@ -121,6 +150,7 @@ void TextLayout::Break()
 
 	for (auto& i : fs_script)
 	{
+		fs = i;
 		auto utx = utext_openUChars(nullptr, i.ucs, i.len, &uec);
 		brki->setText(utx, uec);
 		int32_t p = brki->first();
@@ -136,7 +166,7 @@ void TextLayout::Break()
 				fs.len = wlen;
 				fs.ucs = &i.ucs[p_l];
 				fs.script = i.script;
-				split.push_back(fs);
+				parts.push_back(fs);
 			}
 			p_l = p;
 			p = brki->next();
@@ -149,209 +179,200 @@ void TextLayout::Break()
 }
 void TextLayout::Metrics()
 {
-	parts.clear();
 	UErrorCode uec = U_ZERO_ERROR;
-	UBiDi* bidi = ubidi_open();
-	UBiDiLevel bidiReq = UBIDI_DEFAULT_LTR;
-	BreakPart bp;
 	auto dpi = RLL::GetScale() * 96;
-	for (auto& s : split)
+	for (auto& p : parts)
 	{
 		uec = U_ZERO_ERROR;
-		ubidi_setPara(bidi, s.ucs, s.len, bidiReq, NULL, &uec);
 		if (!U_SUCCESS(uec))
 		{
 			assert(0);
 		}
-		auto f = dynamic_cast<FTFace*>(s.face);
+		auto f = dynamic_cast<FTFace*>(p.face);
 		FT_Set_Char_Size(f->face, 72 * 64, 0, 32, 32);
 		Math3D::Vector2 scale(
 			f->face->size->metrics.x_scale / 65536.f * f->face->units_per_EM,
 			f->face->size->metrics.y_scale / 65536.f * f->face->units_per_EM);
 
-		size_t rc = ubidi_countRuns(bidi, &uec);
 		auto hbf = hb_ft_font_create_referenced(f->face);
-		for (size_t i = 0; i < size_t(rc); ++i) {
+		hb_buffer_t* buf = hb_buffer_create();;
 
-			hb_buffer_t* buf = hb_buffer_create();;
+		//u_charTo
+		//UChar32 c32;
+		//u_strToUTF32(&c32, 1, nullptr, &s.ucs[startRun], 1, &uec);
+		//auto sc = uscript_getScript(c32, &uec);
+		//printf("Processing Bidi Run = %d -- run-start = %d, run-len = %d, isRTL = %d\n",
+		//	i, startRun, lengthRun, isRTL);
+		hb_buffer_add_utf16(buf, (uint16_t*)p.ucs, p.len, 0, -1);
 
-			int32_t startRun = -1;
-			int32_t lengthRun = -1;
-			UBiDiDirection runDir = ubidi_getVisualRun(bidi, i, &startRun, &lengthRun);
-			//u_charTo
-			//UChar32 c32;
-			//u_strToUTF32(&c32, 1, nullptr, &s.ucs[startRun], 1, &uec);
-			//auto sc = uscript_getScript(c32, &uec);
-			bool isRTL = (runDir == UBIDI_RTL);
-			//printf("Processing Bidi Run = %d -- run-start = %d, run-len = %d, isRTL = %d\n",
-			//	i, startRun, lengthRun, isRTL);
-			hb_buffer_add_utf16(buf, (uint16_t*)s.ucs, s.len, startRun, lengthRun);
+		hb_buffer_set_script(buf, hb_icu_script_to_script(p.script));
+		hb_buffer_set_direction(buf, p.rtl ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+		hb_buffer_set_language(buf, hb_language_from_string("en", -1));
 
-			hb_buffer_set_script(buf, hb_icu_script_to_script(s.script));
-			hb_buffer_set_direction(buf, isRTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
-			hb_buffer_set_language(buf, hb_language_from_string("en", -1));
+		hb_shape(hbf, buf, NULL, 0);
 
-			hb_shape(hbf, buf, NULL, 0);
+		unsigned int glyph_count;
+		hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(buf, &glyph_count);
+		hb_glyph_position_t* glyph_pos = hb_buffer_get_glyph_positions(buf, &glyph_count);
+		//TimeCheck("Getglyf start");
+		float szMax = 0; float szMin = 0;
+		Vector2 curs(0, 0);
+		for (unsigned int i = 0; i < glyph_count; i++) {
+			hb_codepoint_t glyphid = glyph_info[i].codepoint;
+			hb_position_t x_offset = glyph_pos[i].x_offset;
+			hb_position_t y_offset = glyph_pos[i].y_offset;
+			hb_position_t x_advance = glyph_pos[i].x_advance;
+			hb_position_t y_advance = glyph_pos[i].y_advance;
+			/* draw_glyph(glyphid, cursor_x + x_offset, cursor_y + y_offset); */
+			//std::cout << x_advance / 64.f << "\t" << y_advance / 64.f << std::endl;
+			//TODO:
+			/*
+			* make size, scale, every font size...;
+			*
+			*/
+			auto fsz = fsizes[glyph_info[i].cluster];
+			GlyphMetrics gmet;
+			auto sg = p.face->GetGlyph(glyphid, &gmet);
+			Vector2 adv(x_advance, y_advance);
+			auto gsc = Vector2(fsz * dpi.x / 72.f, fsz * dpi.y / 72.f);
 
-			unsigned int glyph_count;
-			hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(buf, &glyph_count);
-			hb_glyph_position_t* glyph_pos = hb_buffer_get_glyph_positions(buf, &glyph_count);
-			//TimeCheck("Getglyf start");
-			bp.size = { 0,0 };
-			bp.pxpem = { 0,0 };
-			bp.glyfs.clear();
-			bp.glyfScale.clear();
-			bp.glyfOffset.clear();
-			bp.script = s.script;
-			bp.rtl = isRTL;
-			float szMax = 0; float szMin = 0;
-			Vector2 curs(0, 0);
-			for (unsigned int i = 0; i < glyph_count; i++) {
-				hb_codepoint_t glyphid = glyph_info[i].codepoint;
-				hb_position_t x_offset = glyph_pos[i].x_offset;
-				hb_position_t y_offset = glyph_pos[i].y_offset;
-				hb_position_t x_advance = glyph_pos[i].x_advance;
-				hb_position_t y_advance = glyph_pos[i].y_advance;
-				/* draw_glyph(glyphid, cursor_x + x_offset, cursor_y + y_offset); */
-				//std::cout << x_advance / 64.f << "\t" << y_advance / 64.f << std::endl;
-				//TODO:
-				/*
-				* make size, scale, every font size...;
-				*
-				*/
-				auto fsz = fsizes[glyph_info[i].cluster];
-				GlyphMetrics gmet;
-				auto sg = s.face->GetGlyph(glyphid, &gmet);
-				Vector2 adv(x_advance, y_advance);
-				auto gsc = Vector2(fsz * dpi.x / 72.f, fsz * dpi.y / 72.f);
-
-				bp.size.x += gmet.horizontal.advance * gsc.x; //horizontal layout only
-				if (gmet.size.y * gsc.x > szMax)
-					szMax = gmet.size.y * gsc.x;
-				if (gsc.x > bp.pxpem.x)
-					bp.pxpem.x = gsc.x;
-				if (gsc.y > bp.pxpem.y)
-					bp.pxpem.y = gsc.y;
-				bp.glyfs.push_back(sg);
-				//bp.glyfAdvance.push_back({ xa, ya });
-				bp.glyfOffset.push_back({ (curs.x + x_offset) / scale.x * gsc.x ,(curs.y + y_offset) / scale.y * gsc.y });
-				curs += adv;
-				bp.glyfScale.push_back(gsc);
-			}
-			hb_buffer_destroy(buf);
-			bp.size.y = szMax - szMin;
-			parts.push_back(bp);
+			p.size.x += adv.x / scale.x * gsc.x; //horizontal layout only
+			if (gmet.size.y * gsc.y > szMax)
+				szMax = gmet.size.y * gsc.y;
+			if (gsc.x > p.pxpem.x)
+				p.pxpem.x = gsc.x;
+			if (gsc.y > p.pxpem.y)
+				p.pxpem.y = gsc.y;
+			p.glyfs.push_back(sg);
+			//bp.glyfAdvance.push_back({ xa, ya });
+			p.glyfOffset.push_back({ (curs.x + x_offset) / scale.x * gsc.x ,(curs.y + y_offset) / scale.y * gsc.y });
+			curs += adv;
+			p.glyfScale.push_back(gsc);
 		}
+		hb_buffer_destroy(buf);
+		p.size.y = szMax - szMin;
+
 		hb_font_destroy(hbf);
 	}
-	ubidi_close(bidi);
+	//ubidi_close(bidi);
 }
 
 void TextLayout::Place(ISVGBuilder* sb)
 {
+	struct BIDIPart
+	{
+		std::vector<BreakPart> parts;
+		bool rtl = false;
+	};
 	struct LinePart
 	{
 		std::vector<BreakPart> parts;
+		std::vector<BIDIPart> bidis;
 		Size size;
 		float2 pxpem;
 	};
 	std::vector<LinePart> lines;
 	LinePart cLine;
 	//horizontal only
-	//notmalize direction
-	std::vector<BreakPart> nparts;
-	{
-		int joiner = 0;
-		bool inv = false;
-		int b = 0;
-		int e = 0;
-		UScriptCode lsc = USCRIPT_INVALID_CODE;
-		for (auto i = 0; i < parts.size(); i++)
-		{
-			//if (lsc == USCRIPT_COMMON && i > 0)
-			//{
-			//	parts[i - 1].invDirection = parts[i].invDirection;
-			//}
-			//lsc = parts[i].script;
 
-			if (parts[i].script == USCRIPT_COMMON)
-			{
-				bool befo = false; //is before invDirection
-				bool afte = false;
-				auto n = i - 1;
-				while (n >= 0)
-				{
-					if (parts[n].script != USCRIPT_COMMON)
-					{
-						befo = parts[n].rtl;
-						break;
-					}
-					n--;
-				}
-				n = i + 1;
-				while (n < parts.size())
-				{
-					if (parts[n].script != USCRIPT_COMMON)
-					{
-						afte = parts[n].rtl;
-						break;
-					}
-					n++;
-				}
-				if (afte == befo)
-					parts[i].rtl = afte;
-				else
-					parts[i].rtl = false;
-			}
-		}
-		for (auto i = 0; i < parts.size(); i++)
-		{
-			if (parts[i].rtl)
-			{
-				if (inv == false)
-				{
-					b = i;
-				}
-				nparts.insert(nparts.begin() + b, parts[i]);
-				inv = true;
-			}
-			else
-			{
-				nparts.push_back(parts[i]);
-				inv = false;
-			}
-		}
-	}
 	//calculate line metrics
-	for (auto& i : nparts)
 	{
-		if (cLine.size.x + i.size.x > rectSize.x)
+		for (auto& i : parts)
 		{
-			if (cLine.parts.size() > 0)
+			if (cLine.size.x + i.size.x > rectSize.x)
 			{
-				lines.push_back(cLine);
-				cLine.parts.clear();
-				cLine.size = Size(0, 0);
-				cLine.pxpem = Vector2(0, 0);
-				//continue;
+				if (cLine.parts.size() > 0)
+				{
+					lines.push_back(cLine);
+					cLine.parts.clear();
+					cLine.size = Size(0, 0);
+					cLine.pxpem = Vector2(0, 0);
+					//continue;
+				}
+			}
+			cLine.parts.push_back(i);
+			cLine.size.x += i.size.x;
+			if (i.pxpem.x > cLine.pxpem.x)
+				cLine.pxpem.x = i.pxpem.x;
+			if (i.pxpem.y > cLine.pxpem.y)
+				cLine.pxpem.y = i.pxpem.y;
+
+			if (i.size.y > cLine.size.y)
+			{
+				cLine.size.y = i.size.y;
 			}
 		}
-		cLine.parts.push_back(i);
-		cLine.size.x += i.size.x;
-		if (i.pxpem.x > cLine.pxpem.x)
-			cLine.pxpem.x = i.pxpem.x;
-		if (i.pxpem.y > cLine.pxpem.y)
-			cLine.pxpem.y = i.pxpem.y;
-
-		if (i.size.y > cLine.size.y)
+		if (cLine.parts.size() > 0)
 		{
-			cLine.size.y = i.size.y;
+			lines.push_back(cLine);
 		}
 	}
-	if (cLine.parts.size() > 0)
+
+	//bidi lines
 	{
-		lines.push_back(cLine);
+		for (auto& l : lines)
+		{
+			bool inv = false;
+			//fix two terminal of the line's COMMON_SCRIPT bidi info
+			for (auto k = 0; k < l.parts.size(); k++)
+			{
+				if (l.parts[k].script == USCRIPT_COMMON)
+				{
+					l.parts[k].rtl = false;
+				}
+				else break;
+			}
+			for (auto k = l.parts.size() - 1; k >= 0; k--)
+			{
+				if (l.parts[k].script == USCRIPT_COMMON)
+				{
+					l.parts[k].rtl = false;
+				}
+				else break;
+			}
+			//TODO: combine below two for, can it?
+			BIDIPart bdp;
+			for (auto i = 0; i < l.parts.size(); i++)
+			{
+				if (l.parts[i].rtl != inv)
+				{
+					if (bdp.parts.size() > 0)
+					{
+						l.bidis.push_back(bdp);
+						bdp.parts.clear();
+					}
+					bdp.rtl = l.parts[i].rtl;
+				}
+				inv = l.parts[i].rtl;
+				bdp.parts.push_back(l.parts[i]);
+
+			}
+			if (bdp.parts.size() > 0)
+				l.bidis.push_back(bdp);
+			bdp.parts.clear();
+			l.parts.clear();
+			for (auto& i : l.bidis)
+			{
+				if (i.rtl)
+				{
+					for (auto it = i.parts.rbegin(); it != i.parts.rend(); )
+					{
+						l.parts.push_back(*it);
+						++it;
+					}
+				}
+				else
+				{
+					for (auto it = i.parts.begin(); it != i.parts.end(); )
+					{
+						l.parts.push_back(*it);
+						++it;
+					}
+				}
+			}
+		}
 	}
+
 	float2 cursor(0, 0);
 	for (int i = 0; i < lines.size(); i++)
 	{

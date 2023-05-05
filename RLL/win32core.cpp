@@ -157,11 +157,11 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 
 	auto tl = new TextLayout(L"\
 TextLayout. 这次职业生涯规划。\
-Français Abc defgh a123c 1.234ff.\
+Français Abc defgh a123c 1.2f.\
  nbsp left. done? emj\
-कोहियर से नमस्ते!😎🧑🏿🧑🏿🥳 |אָלֶף־בֵּית 🧑🏿🥳עִבְרִי/ ltr🥵rtl |اللغة العربية/\
- Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่?"
-		, { 300,50 }, fs_df);
+कोहियर से नमस्ते!😎🧑🏿🧑🏿🥳|אָלֶף־בֵּית 🧑🏿🥳עִבְרִי/ ltr🥵rtl |اللغة العربية/\
+ Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่? RLO‮fdp.exe‬LRO"
+		, { 330,50 }, fs_df);
 	//tl->Break();//TextLayout文本布局。Abc defgh a123c 1.234ff. nbsp left. done? emj😎🧑🏿🧑🏿
 	//tl->Metrics();
 	cm_t_tly = tl->Commit(paintDevice);
@@ -170,7 +170,7 @@ Français Abc defgh a123c 1.234ff.\
 	sb = paintDevice->CreateSVGBuilder();
 	auto svg_sb = (D3D12SVG*)hb_test(fc_rob, sb, L"Roboto Regular. AWAVfifiifjflft. 中字默。abcDT");
 	sb->Reset();
-	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Times New Roman. AWAVfifiifjflft. 中字默。abcDT nbsp 1 km/h");
+	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Times New Roman. AWAVfifiifjflftfL. 中字默。abcDT nbsp 1 km/h RLO‮fdp.exe‬LRO");
 	sb->Reset();
 	auto svg_sbk = (D3D12SVG*)hb_test(fc_khm, sb, L"ញុំបានមើ khmer");//ញុំបានមើ khmer
 	sb->Reset();
@@ -356,6 +356,9 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_MBUTTONUP:
 		//case WM_SETCURSOR:
 	{
+		if(msg == WM_MBUTTONUP)
+			_DBG_D3DLIVE_OBJ();
+		
 		//WndProc(hwnd, WM_MOUSEMOVE, wp, lp);
 		Vector2 mouse{ GET_X_LPARAM(lp) / dpiScaleFactor.x,GET_Y_LPARAM(lp) / dpiScaleFactor.y };
 		POINT cm;

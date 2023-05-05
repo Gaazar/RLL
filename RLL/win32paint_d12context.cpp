@@ -113,7 +113,7 @@ void D3D12PaintContext::DrawSVG(RLL::ISVG* svg)
 	cmdList->IASetVertexBuffers(0, 4, m->vbv);
 
 	cmdList->DrawIndexedInstanced(m->idxCount, 1, 0, 0, 0);
-}
+} 
 
 
 D3D12FramePaintContext::D3D12FramePaintContext(D3D12PaintDevice* pdev, Frame* f) : D3D12PaintContext(pdev)

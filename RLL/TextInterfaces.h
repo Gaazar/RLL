@@ -139,29 +139,35 @@ namespace RLL
 		} lineAlign;
 		struct BreakPart
 		{
-			Math3D::float2 size;
-			Math3D::float2 pxpem;
-			bool rtl = false;
+			UChar* ucs;
+			int32_t len;
+			IFontFace* face;
 			UScriptCode script;
+
+			Math3D::Vector2 size;
+			Math3D::Vector2 pxpem;
+			bool rtl = false;
 			std::vector<Math3D::float2> glyfOffset;
 			std::vector<Math3D::float2> glyfScale;
 			std::vector<RLL::ISVG*> glyfs;
 			//int32_t charIndex;
 			//int32_t charLength;
+			BreakPart()
+			{
+				ucs = nullptr;
+				len = 0;
+				face = nullptr;
+				script = USCRIPT_INVALID_CODE;
+				size = { 0,0 };
+				pxpem = { 0,0 };
+			}
 		};
-		struct FontSplit
-		{
-			UChar* ucs;
-			int32_t len;
-			IFontFace* face;
-			UScriptCode script;
-		};
+;
 		void* text;
 		int32_t textLen;
 		RLL::Size rectSize;
 		Range<RLL::IFontFace*> ffaces;
 		Range<float> fsizes;
-		std::vector<FontSplit> split;
 		std::vector<BreakPart> parts;
 
 	public:

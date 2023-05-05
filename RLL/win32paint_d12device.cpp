@@ -1,5 +1,6 @@
 #include "win32paint_d12.h"
 #include <d3dcompiler.h>
+#include <dxgidebug.h>
 
 using namespace RLL;
 using namespace std;
@@ -114,6 +115,16 @@ constexpr UINT CalcConstantBufferByteSize(UINT byteSize)
 {
 	return (byteSize + 255) & ~255;
 }
+
+void _DBG_D3DLIVE_OBJ()
+{
+	IDXGIDebug1* pDebug = nullptr;
+	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&pDebug))))
+	{
+		pDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+		pDebug->Release();
+	}
+}
 void D3D12PaintDevice::CreateDevices(int flags)
 {
 	UINT dxgiFactoryFlags = 0;
@@ -126,6 +137,7 @@ void D3D12PaintDevice::CreateDevices(int flags)
 			// Enable additional debug layers.
 			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 		}
+		
 	}
 	SUCCESS(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
 	bool m_useWarpDevice = false;
