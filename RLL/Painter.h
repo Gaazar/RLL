@@ -92,7 +92,10 @@ namespace RLL
 	{
 		virtual void Dispose() = 0;
 	};
-
+	class IAVG : public IBase
+	{
+		virtual void Dispose() = 0;
+	};
 	class IPaintContext;
 	class IPaintDevice :public RLL::IBase
 	{

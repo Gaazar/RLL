@@ -104,11 +104,12 @@ struct CoreMesh
 		VERTEX_FORMAT_UV2,
 		VERTEX_FORMAT_UV3,
 	};
-	Math3D::Vector2* vertices;
-	Math3D::Vector2* uvs;
-	Math3D::Vector3* pnbs;
-	Math3D::Vector4* tfs;
-	unsigned short* indices;
+	Math3D::Vector2* vertices = nullptr;
+	Math3D::Vector2* uvs = nullptr;
+	Math3D::Vector4* tfs = nullptr;
+	Math3D::Vector3* pnbs = nullptr;
+	Math3D::Vector3* pnbs1 = nullptr;
+	unsigned short* indices = nullptr;
 
 	unsigned int vertCount;
 	unsigned int idxCount;
@@ -118,11 +119,12 @@ struct CoreMesh
 	ResourceBlob vertBuffer;
 	ResourceBlob uvBuffer;
 	ResourceBlob pnbBuffer;
+	ResourceBlob pnbBuffer1;
 	ResourceBlob tfBuffer;
 	ResourceBlob indexBuffer;
 
 	D3D12_INDEX_BUFFER_VIEW ibv;
-	D3D12_VERTEX_BUFFER_VIEW vbv[4];
+	D3D12_VERTEX_BUFFER_VIEW vbv[5];
 
 public:
 	CoreMesh()
@@ -137,8 +139,9 @@ public:
 		vertBuffer.data = reinterpret_cast<void**>(&vertices);
 		indexBuffer.data = reinterpret_cast<void**>(&indices);
 		uvBuffer.data = reinterpret_cast<void**>(&uvs);
-		pnbBuffer.data = reinterpret_cast<void**>(&pnbs);
 		tfBuffer.data = reinterpret_cast<void**>(&tfs);
+		pnbBuffer.data = reinterpret_cast<void**>(&pnbs);
+		pnbBuffer1.data = reinterpret_cast<void**>(&pnbs1);
 	}
 	struct SubMesh
 	{

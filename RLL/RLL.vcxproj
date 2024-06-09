@@ -80,13 +80,13 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(INCLUDE);$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>$(LIBPATH);$(LIBRARY);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LIBPATH);F:\libs\debug;$(LIBRARY);$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(INCLUDE);F:\libs\Sharp\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBPATH);$(LibraryPath)</LibraryPath>
+    <LibraryPath>F:\libs\release;$(LIBPATH);$(LibraryPath)</LibraryPath>
     <SourcePath>F:\libs\Sharp\src;$(SourcePath)</SourcePath>
     <ExecutablePath>F:\libs\bin64;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
@@ -148,6 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BlockLayout.cpp" />
     <ClCompile Include="FontStack.cpp" />
     <ClCompile Include="TextLayout.cpp" />
     <ClCompile Include="win32paint_d12context.cpp" />
@@ -164,12 +165,15 @@
     <ClCompile Include="win32core.cpp" />
     <ClCompile Include="win32core_mesh.cpp" />
     <ClCompile Include="win32paint_d12.cpp" />
+    <ClInclude Include="delegate.h" />
     <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="fi_ft.h" />
     <ClInclude Include="perf_util.h" />
+    <ClInclude Include="reactive.h" />
     <ClInclude Include="TextInterfaces.h" />
     <ClInclude Include="Painter.h" />
     <ClInclude Include="PathGeometry.h" />
+    <ClInclude Include="ThirdParty.h" />
     <ClInclude Include="win32acrylic.h" />
     <ClInclude Include="win32core_mesh.h" />
     <ClInclude Include="win32paint_d12.h" />
@@ -187,6 +191,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\core.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shader\path.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\core_anim.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shader\core_vertex.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shader\dbgWire.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

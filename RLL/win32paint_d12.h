@@ -293,8 +293,8 @@ struct PathBuffer
 struct MeshGroup
 {
 	std::vector<CoreMesh*> meshs;
-	ID3D12Resource* resource[5];
-	ResourceBlob uploads[5];
+	ID3D12Resource* resource[6] = {0};
+	ResourceBlob uploads[6] = {0};
 };
 class D3D12PaintContext;
 class D3D12FramePaintContext;
@@ -412,6 +412,7 @@ public:
 	void EndDraw();
 	void SetTransform(Math3D::Matrix4x4& tfCache);
 	void DrawSVG(RLL::ISVG* svg);
+	void DrawAVG(RLL::IAVG* avg);
 	void DrawMorph() { NOIMPL; };
 	void Flush();
 

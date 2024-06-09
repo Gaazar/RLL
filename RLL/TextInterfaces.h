@@ -129,15 +129,11 @@ namespace RLL
 				if (values.size() > 0)
 					return values[0].value;
 				assert(0);
+				return T();
 			}
 
 		};
-		struct LA
-		{
-			LINE_ALIGN x = LINE_ALIGN_START;
-			LINE_ALIGN y = LINE_ALIGN_BASELINE;
-		} lineAlign;
-		struct BreakPart
+		struct BreakPart : public IElement
 		{
 			UChar* ucs;
 			int32_t len;
@@ -145,7 +141,6 @@ namespace RLL
 			UScriptCode script;
 
 			Math3D::Vector2 size;
-			Math3D::Vector2 pxpem;
 			bool rtl = false;
 			std::vector<Math3D::float2> glyfOffset;
 			std::vector<Math3D::float2> glyfScale;
@@ -159,13 +154,25 @@ namespace RLL
 				face = nullptr;
 				script = USCRIPT_INVALID_CODE;
 				size = { 0,0 };
-				pxpem = { 0,0 };
+			}
+			RLL::Size Size(ElementProps* parentProps)
+			{
+				return RLL::Size(size);
+			}
+			LANG_DIRECTION Direction() { return rtl ? LANG_DIRECTION_RL : LANG_DIRECTION_LR; }
+			ScriptCode Script() { return script; };
+			void Place(Math3D::Matrix4x4* parentTransform, RenderList renderList)
+			{
+				NOIMPL;
 			}
 		};
-;
+		;
 		void* text;
 		int32_t textLen;
-		RLL::Size rectSize;
+		RLL::Size contentSize;
+		LANG_DIRECTION direction = LANG_DIRECTION_LR_TB;
+		LINE_ALIGN lineAlign = LINE_ALIGN_START;
+		PARA_ALIGN paraAlign = PARA_ALIGN_START;
 		Range<RLL::IFontFace*> ffaces;
 		Range<float> fsizes;
 		std::vector<BreakPart> parts;
@@ -176,8 +183,8 @@ namespace RLL
 		void Place(RLL::ISVGBuilder*);
 	public:
 		TextLayout(wchar_t* text, RLL::Size size, RLL::IFontFace* fface);
-		void SetParagraphAlign(PARA_ALIGN axis, PARA_ALIGN biAxis);
-		void SetLineAlign(LINE_ALIGN axis, LINE_ALIGN biAxis);
+		void SetParagraphAlign(PARA_ALIGN align);
+		void SetLineAlign(LINE_ALIGN align);
 		void SetFontFace(RLL::IFontFace* ff, int32_t begin, int32_t len);
 		RLL::ISVG* Commit(RLL::IPaintDevice* dvc);
 		void Dispose();

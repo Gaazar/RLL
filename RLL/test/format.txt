@@ -29,7 +29,7 @@ frame(width=800,height=600,style="uni",mvable,!sizable,id=xxx){
 compiled content:
 
 #include "xxxx.h"
-int EnterPoint()
+int EntryPoint()
 {
 	auto frame_hexid = new Frame();
 	frame_hexid->width(800);

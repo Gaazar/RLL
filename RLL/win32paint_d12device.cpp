@@ -6,6 +6,8 @@ using namespace RLL;
 using namespace std;
 using namespace Math3D;
 #define SHADER_CORE L"shader\\core.hlsl"
+#define SHADER_CORE_VERTEX L"shader\\core_vertex.hlsl"
+#define SHADER_CORE_WIRE L"shader\\dbgWire.hlsl"
 #define ARRLEN(x) (sizeof(x)/sizeof(*x))
 
 IPaintDevice* RLL::CreatePaintDevice()
@@ -137,7 +139,7 @@ void D3D12PaintDevice::CreateDevices(int flags)
 			// Enable additional debug layers.
 			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 		}
-		
+
 	}
 	SUCCESS(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
 	bool m_useWarpDevice = false;
@@ -236,10 +238,11 @@ void D3D12PaintDevice::LoadShaders()
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "PNB", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "UVTF", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TENSOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "PNB", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "PNB", 1, DXGI_FORMAT_R32G32B32_FLOAT, 4, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
-	ComPtr<ID3DBlob> vbc = CompileShader(SHADER_CORE, nullptr, "VS", "vs_5_1");
+	ComPtr<ID3DBlob> vbc = CompileShader(SHADER_CORE_VERTEX, nullptr, "VS", "vs_5_1");
 	ComPtr<ID3DBlob> pbc = CompileShader(SHADER_CORE, nullptr, "PS", "ps_5_1");
 
 	auto rs = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -278,7 +281,7 @@ void D3D12PaintDevice::LoadShaders()
 	psoDesc.SampleDesc.Count = msaaEnable ? 4 : 1;	//不使用4XMSAA
 	psoDesc.SampleDesc.Quality = msaaEnable ? msaaQuality - 1 : 0;	////不使用4XMSAA
 
-		//Aplha Blend Settings
+	//Aplha Blend Settings
 	D3D12_BLEND_DESC& desc = psoDesc.BlendState;
 	desc.AlphaToCoverageEnable = false;
 	desc.RenderTarget[0].BlendEnable = true;
@@ -296,8 +299,8 @@ void D3D12PaintDevice::LoadShaders()
 
 	gpuTextureHeap.Create(d3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2048, true);
 	///dbg
-	pbc = CompileShader(L"shader\\dbgWire.hlsl", nullptr, "PS", "ps_5_1");
-	vbc = CompileShader(L"shader\\dbgWire.hlsl", nullptr, "VS", "vs_5_1");
+	pbc = CompileShader(SHADER_CORE_WIRE, nullptr, "PS", "ps_5_1");
+	vbc = CompileShader(SHADER_CORE_WIRE, nullptr, "VS", "vs_5_1");
 	rs.FillMode = D3D12_FILL_MODE_WIREFRAME;
 	psoDesc.PS = { reinterpret_cast<BYTE*>(pbc->GetBufferPointer()), pbc->GetBufferSize() };
 	psoDesc.VS = { reinterpret_cast<BYTE*>(vbc->GetBufferPointer()), vbc->GetBufferSize() };
@@ -545,7 +548,7 @@ void D3D12PaintDevice::Wait()
 		HANDLE eventHandle = CreateEvent(nullptr, false, false, L"FenceSetDone");	//创建事件
 		gFence->SetEventOnCompletion(cFence, eventHandle);//当围栏达到mCurrentFence值（即执行到Signal（）指令修改了围栏值）时触发的eventHandle事件
 		WaitForSingleObject(eventHandle, INFINITE);//等待GPU命中围栏，激发事件（阻塞当前线程直到事件触发，注意此Enent需先设置再等待，
-							   //如果没有Set就Wait，就死锁了，Set永远不会调用，所以也就没线程可以唤醒这个线程）
+		//如果没有Set就Wait，就死锁了，Set永远不会调用，所以也就没线程可以唤醒这个线程）
 		CloseHandle(eventHandle);
 	}
 
@@ -583,8 +586,8 @@ void D3D12PaintDevice::CommitChange()
 			cMeshGroup.uploads[0] = CreateUploadBuffer(ind * sizeof(*CoreMesh::indices));
 			cMeshGroup.uploads[1] = CreateUploadBuffer(vex * sizeof(*CoreMesh::vertices));
 			cMeshGroup.uploads[2] = CreateUploadBuffer(vex * sizeof(*CoreMesh::uvs));
-			cMeshGroup.uploads[3] = CreateUploadBuffer(vex * sizeof(*CoreMesh::pnbs));
-			cMeshGroup.uploads[4] = CreateUploadBuffer(vex * sizeof(*CoreMesh::tfs));
+			cMeshGroup.uploads[3] = CreateUploadBuffer(vex * sizeof(*CoreMesh::tfs));
+			cMeshGroup.uploads[4] = CreateUploadBuffer(vex * sizeof(*CoreMesh::pnbs));
 			ind = 0; vex = 0;
 #define arrcpyi(dst,src,di,sz) memcpy( (( (decltype(src))dst ) + (di) ) ,(src),sizeof(*src)*(sz))
 			for (auto i : cMeshGroup.meshs)
@@ -592,17 +595,26 @@ void D3D12PaintDevice::CommitChange()
 				arrcpyi(cMeshGroup.uploads[0].data, i->indices, ind, i->idxCount);
 				arrcpyi(cMeshGroup.uploads[1].data, i->vertices, vex, i->vertCount);
 				arrcpyi(cMeshGroup.uploads[2].data, i->uvs, vex, i->vertCount);
-				arrcpyi(cMeshGroup.uploads[3].data, i->pnbs, vex, i->vertCount);
-				arrcpyi(cMeshGroup.uploads[4].data, i->tfs, vex, i->vertCount);
-
+				arrcpyi(cMeshGroup.uploads[3].data, i->tfs, vex, i->vertCount);
+				arrcpyi(cMeshGroup.uploads[4].data, i->pnbs, vex, i->vertCount);
+				if (i->pnbs1)
+				{
+					if (!cMeshGroup.uploads[5].data)
+						cMeshGroup.uploads[5] = CreateUploadBuffer(vex * sizeof(*CoreMesh::pnbs1));
+					arrcpyi(cMeshGroup.uploads[5].data, i->pnbs1, vex, i->vertCount);
+				}
 				ind += i->idxCount;
 				vex += i->vertCount;
 			}
 			cMeshGroup.resource[0] = MakeDefaultBuffer(cMeshGroup.uploads[0].gpuBuffer, ind * sizeof(*CoreMesh::indices));
 			cMeshGroup.resource[1] = MakeDefaultBuffer(cMeshGroup.uploads[1].gpuBuffer, vex * sizeof(*CoreMesh::vertices));
 			cMeshGroup.resource[2] = MakeDefaultBuffer(cMeshGroup.uploads[2].gpuBuffer, vex * sizeof(*CoreMesh::uvs));
-			cMeshGroup.resource[3] = MakeDefaultBuffer(cMeshGroup.uploads[3].gpuBuffer, vex * sizeof(*CoreMesh::pnbs));
-			cMeshGroup.resource[4] = MakeDefaultBuffer(cMeshGroup.uploads[4].gpuBuffer, vex * sizeof(*CoreMesh::tfs));
+			cMeshGroup.resource[3] = MakeDefaultBuffer(cMeshGroup.uploads[3].gpuBuffer, vex * sizeof(*CoreMesh::tfs));
+			cMeshGroup.resource[4] = MakeDefaultBuffer(cMeshGroup.uploads[4].gpuBuffer, vex * sizeof(*CoreMesh::pnbs));
+			if (cMeshGroup.uploads[5].data)
+			{
+				cMeshGroup.resource[5] = MakeDefaultBuffer(cMeshGroup.uploads[5].gpuBuffer, vex * sizeof(*CoreMesh::pnbs1));
+			}
 
 			ind = 0; vex = 0;
 			for (auto i : cMeshGroup.meshs)
@@ -619,6 +631,11 @@ void D3D12PaintDevice::CommitChange()
 			cMeshGroup.uploads[2].gpuBuffer->Unmap(0, nullptr);
 			cMeshGroup.uploads[3].gpuBuffer->Unmap(0, nullptr);
 			cMeshGroup.uploads[4].gpuBuffer->Unmap(0, nullptr);
+			if (cMeshGroup.uploads[5].data)
+			{
+				cMeshGroup.uploads[5].gpuBuffer->Unmap(0, nullptr);
+				cMeshGroup.uploads[5].data = nullptr;
+			}
 			cMeshGroup.uploads[0].data = nullptr;
 			cMeshGroup.uploads[1].data = nullptr;
 			cMeshGroup.uploads[2].data = nullptr;
@@ -639,7 +656,8 @@ void D3D12PaintDevice::PostFlush()
 	{
 		for (auto& i : cMeshGroup.uploads)
 		{
-			i.gpuBuffer->Release();
+			if (i.gpuBuffer)
+				i.gpuBuffer->Release();
 		}
 		meshGroups.push_back(cMeshGroup);
 		cMeshGroup.meshs.clear();

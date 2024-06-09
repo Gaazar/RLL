@@ -5,7 +5,6 @@
 #include "unicode/ucnv.h"
 #include "unicode/ubidi.h"
 #include "unicode/ustring.h"
-#include "unicode/uscript.h"
 #include "unicode/brkiter.h"
 
 #include "harfbuzz/hb.h"
@@ -22,7 +21,7 @@ using namespace Math3D;
 TextLayout::TextLayout(wchar_t* text, RLL::Size sz, IFontFace* fface)
 {
 	UErrorCode uec = U_ZERO_ERROR;
-	rectSize = sz;
+	contentSize = sz;
 	textLen = wcslen(text);
 	this->text = new UChar[textLen + 1];
 	u_strFromWCS((UChar*)this->text, textLen + 1, &textLen, text, textLen, &uec);
@@ -46,6 +45,10 @@ FTFace* GetFTFace(IFontFace* f, char16_t c)
 	}
 	return ftf;
 }
+bool bidi_ltr(LANG_DIRECTION d)
+{
+	return (d == LANG_DIRECTION_BT_LR || LANG_DIRECTION_TB_LR || LANG_DIRECTION_LR_TB || LANG_DIRECTION_LR_BT);
+}
 void TextLayout::Break()
 {
 	std::vector<BreakPart> fs_bidi;
@@ -58,7 +61,7 @@ void TextLayout::Break()
 	//break bidi
 	{
 		UBiDi* bidi = ubidi_open();
-		UBiDiLevel bidiReq = UBIDI_DEFAULT_LTR;
+		UBiDiLevel bidiReq = bidi_ltr(direction) ? UBIDI_DEFAULT_LTR : UBIDI_DEFAULT_RTL;
 		ubidi_setPara(bidi, uTex, textLen, bidiReq, NULL, &uec);
 		if (U_SUCCESS(uec)) {
 			//int paraDir = ubidi_getParaLevel(bidi);
@@ -235,14 +238,10 @@ void TextLayout::Metrics()
 			auto sg = p.face->GetGlyph(glyphid, &gmet);
 			Vector2 adv(x_advance, y_advance);
 			auto gsc = Vector2(fsz * dpi.x / 72.f, fsz * dpi.y / 72.f);
-
+			p.size.y = gsc.y;
 			p.size.x += adv.x / scale.x * gsc.x; //horizontal layout only
 			if (gmet.size.y * gsc.y > szMax)
 				szMax = gmet.size.y * gsc.y;
-			if (gsc.x > p.pxpem.x)
-				p.pxpem.x = gsc.x;
-			if (gsc.y > p.pxpem.y)
-				p.pxpem.y = gsc.y;
 			p.glyfs.push_back(sg);
 			//bp.glyfAdvance.push_back({ xa, ya });
 			p.glyfOffset.push_back({ (curs.x + x_offset) / scale.x * gsc.x ,(curs.y + y_offset) / scale.y * gsc.y });
@@ -269,7 +268,6 @@ void TextLayout::Place(ISVGBuilder* sb)
 		std::vector<BreakPart> parts;
 		std::vector<BIDIPart> bidis;
 		Size size;
-		float2 pxpem;
 	};
 	std::vector<LinePart> lines;
 	LinePart cLine;
@@ -279,24 +277,19 @@ void TextLayout::Place(ISVGBuilder* sb)
 	{
 		for (auto& i : parts)
 		{
-			if (cLine.size.x + i.size.x > rectSize.x)
+			if (cLine.size.x + i.size.x > contentSize.x)
 			{
 				if (cLine.parts.size() > 0)
 				{
 					lines.push_back(cLine);
 					cLine.parts.clear();
 					cLine.size = Size(0, 0);
-					cLine.pxpem = Vector2(0, 0);
 					//continue;
 				}
 			}
 			cLine.parts.push_back(i);
 			cLine.size.x += i.size.x;
-			if (i.pxpem.x > cLine.pxpem.x)
-				cLine.pxpem.x = i.pxpem.x;
-			if (i.pxpem.y > cLine.pxpem.y)
-				cLine.pxpem.y = i.pxpem.y;
-
+			
 			if (i.size.y > cLine.size.y)
 			{
 				cLine.size.y = i.size.y;
@@ -376,15 +369,16 @@ void TextLayout::Place(ISVGBuilder* sb)
 	float2 cursor(0, 0);
 	for (int i = 0; i < lines.size(); i++)
 	{
-		cursor.y += lines[i].pxpem.y * 1.2f;
+		cursor.y += lines[i].size.y * 1.2f;
 		cursor.x = 0;
 		for (auto& n : lines[i].parts)
 		{
 			for (int j = 0; j < n.glyfs.size(); j++)
 			{
-				sb->Push(n.glyfs[j], &Matrix4x4::TRS(
-					Vector3(cursor + n.glyfOffset[j]), Quaternion::identity(),
-					Vector3(n.glyfScale[j].x, n.glyfScale[j].y, 1)));
+				if (n.glyfs[j])
+					sb->Push(n.glyfs[j], &Matrix4x4::TRS(
+						Vector3(cursor + n.glyfOffset[j]), Quaternion::identity(),
+						Vector3(n.glyfScale[j].x, n.glyfScale[j].y, 1)));
 				//auto o = cursor + n.glyfOffset[j];
 				//sb->Push(n.glyfs[j],
 				//	&(Matrix4x4::Scaling({ n.glyfScale[j].x, n.glyfScale[j].y, 1 }) * 
@@ -395,14 +389,13 @@ void TextLayout::Place(ISVGBuilder* sb)
 		}
 	}
 }
-void TextLayout::SetParagraphAlign(PARA_ALIGN axis, PARA_ALIGN biAxis)
+void TextLayout::SetParagraphAlign(PARA_ALIGN axis)
 {
 	NOIMPL;
 }
-void TextLayout::SetLineAlign(LINE_ALIGN axis, LINE_ALIGN biAxis)
+void TextLayout::SetLineAlign(LINE_ALIGN axis)
 {
-	lineAlign.x = axis;
-	lineAlign.y = biAxis;
+	NOIMPL;
 }
 RLL::ISVG* TextLayout::Commit(RLL::IPaintDevice* dvc)
 {

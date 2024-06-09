@@ -70,6 +70,9 @@
     <ClCompile Include="FontStack.cpp">
       <Filter>src\shared</Filter>
     </ClCompile>
+    <ClCompile Include="BlockLayout.cpp">
+      <Filter>src\shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Metrics.h">
@@ -129,9 +132,30 @@
     <ClInclude Include="perf_util.h">
       <Filter>src\win32impl</Filter>
     </ClInclude>
+    <ClInclude Include="ThirdParty.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="reactive.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="delegate.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\core.hlsl">
+      <Filter>src\shader</Filter>
+    </None>
+    <None Include="shader\path.hlsli">
+      <Filter>src\shader</Filter>
+    </None>
+    <None Include="shader\core_anim.hlsl">
+      <Filter>src\shader</Filter>
+    </None>
+    <None Include="shader\core_vertex.hlsl">
+      <Filter>src\shader</Filter>
+    </None>
+    <None Include="shader\dbgWire.hlsl">
       <Filter>src\shader</Filter>
     </None>
   </ItemGroup>

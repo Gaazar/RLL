@@ -5,6 +5,9 @@
 #else
 #define NOIMPL
 #endif
+
+#pragma warning(push)
+#pragma warning(disable:4244)
 namespace RLL
 {
 	enum SIZE_MODE {
@@ -12,17 +15,20 @@ namespace RLL
 		SIZE_MODE_FIXED,	//by given metrics
 		SIZE_MODE_DYNAMIC	//by parent given
 	};
+	//deprecated LANG_DIRECTION replaced.
 	enum AXIS_DIR {
 		AXIS_DIR_NORMAL,	//left to right or top to bottom
 		AXIS_DIR_REVERSE,
 		AXIS_DIR_S2E,	//start to end, text direction
 		AXIS_DIR_E2S,	//end to start
 	};
+	//deprecated LANG_DIRECTION replaced.
 	enum AXIS_MAJOR
 	{
 		AXIS_MAJOR_ROW,
 		AXIS_MAJOR_COLUMN
 	};
+	//deprecated, LINE_ALGIN PARA_ALIGN replaced.
 	enum AXIS_SPACE
 	{
 		AXIS_SPACE_START,
@@ -31,20 +37,48 @@ namespace RLL
 		AXIS_SPACE_BETWEEN,
 		AXIS_SPACE_AROUND
 	};
-	enum LINE_ALIGN
+	enum LANG_DIRECTION
+	{
+		LANG_DIRECTION_LR_TB = 0,
+		LANG_DIRECTION_RL_TB = 1,
+		LANG_DIRECTION_LR_BT = 2,
+		LANG_DIRECTION_RL_BT = 3,
+		LANG_DIRECTION_TB_LR,
+		LANG_DIRECTION_BT_LR,
+		LANG_DIRECTION_TB_RL,
+		LANG_DIRECTION_BT_RL,
+
+		LANG_DIRECTION_LR = LANG_DIRECTION_LR_TB,
+		LANG_DIRECTION_RL = LANG_DIRECTION_RL_TB,
+	};
+	enum LINE_ALIGN //define how to align a LINE in text direction
 	{
 		LINE_ALIGN_START,
 		LINE_ALIGN_END,
-		LINE_ALIGN_BASELINE,
 		LINE_ALIGN_CENTER,
 		LINE_ALIGN_STRETCH,
+		LINE_ALIGN_AVERAGE,
 	};
-	enum PARA_ALIGN
+	enum PARA_ALIGN //define how to align LINEs in vertical to text direction
 	{
 		PARA_ALIGN_START,
 		PARA_ALIGN_END,
 		PARA_ALIGN_CENTER,
 		PARA_ALIGN_STRETCH,
+		PARA_ALIGN_AVERAGE,
+	};
+
+	enum UNIT
+	{
+		UNIT_PX,
+		UNIT_EM,
+		UNIT_PT,
+		UNIT_VW,
+		UNIT_VH,
+		UNIT_PERCENTAGE,
+		UNIT_FLEX,
+		UNIT_PPX,
+
 	};
 	struct Axis {
 		AXIS_DIR direction;
@@ -82,12 +116,16 @@ namespace RLL
 		Math3D::Vector2 baseline;
 		float ascender, decender;
 	};
-
-	struct BlockProps
+	struct ElementProps
 	{
 		Math3D::Vector2 minSize;
 		Math3D::Vector2 maxSize;
-		Math3D::Vector2 properSize;
+		Math3D::Vector2 defaultSize;
+		Math3D::Vector2 size;
+	};
+	struct BlockProps : ElementProps
+	{
+		bool isDynamicSize;
 		float lineGap;
 	};
 	struct GlyphMetrics
@@ -129,6 +167,11 @@ namespace RLL
 		{
 			this->x = x;
 			this->y = y;
+		}
+		Size(Math3D::Vector2& v)
+		{
+			this->x = v.x;
+			this->y = v.y;
 		}
 		Size(SizeI& s)
 		{
@@ -202,3 +245,4 @@ namespace RLL
 
 	};
 }
+#pragma warning(pop)

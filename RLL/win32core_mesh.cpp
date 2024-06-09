@@ -18,6 +18,12 @@ void CoreMesh::Upload(D3D12PaintDevice* device)
 	//uvBuffer.gpuBuffer = device->CreateDefaultBuffer(uvs, vertCount * sizeof(Vector2));
 	pnbBuffer.data = &pnbs;
 	pnbBuffer.size = vertCount * sizeof(Vector3);
+	if (pnbs)
+	{
+		pnbBuffer1.data = &pnbs1;
+		pnbBuffer1.size = vertCount * sizeof(Vector3);
+	}
+
 	//pnbBuffer.gpuBuffer = device->CreateDefaultBuffer(pnbs, vertCount * sizeof(Vector3));
 	vertBuffer.data = &vertices;
 	vertBuffer.size = vertCount * sizeof(Vector2);
@@ -37,23 +43,26 @@ void CoreMesh::Upload(D3D12PaintDevice* device)
 	//vbv[1].BufferLocation = uvBuffer.gpuBuffer->GetGPUVirtualAddress();
 	//vbv[1].StrideInBytes = 8;
 
-	vbv[2].SizeInBytes = pnbBuffer.size;
+	vbv[2].SizeInBytes = tfBuffer.size;
 	//vbv[2].BufferLocation = pnbBuffer.gpuBuffer->GetGPUVirtualAddress();
 	//vbv[2].StrideInBytes = 12;
-	vbv[3].SizeInBytes = tfBuffer.size;
+	vbv[3].SizeInBytes = pnbBuffer.size;
+	vbv[4].SizeInBytes = pnbBuffer1.size;
 	device->UploadMesh(this);
 }
 void CoreMesh::Uploaded(ID3D12Resource** gRes, int ioffset, int voffset)
 {
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 6; i++)
 	{
-		gRes[i]->AddRef();
+		if (gRes[i])
+			gRes[i]->AddRef();
 	}
 	indexBuffer.gpuBuffer = gRes[0];
 	vertBuffer.gpuBuffer = gRes[1];
 	uvBuffer.gpuBuffer = gRes[2];
-	pnbBuffer.gpuBuffer = gRes[3];
-	tfBuffer.gpuBuffer = gRes[4];
+	tfBuffer.gpuBuffer = gRes[3];
+	pnbBuffer.gpuBuffer = gRes[4];
+	pnbBuffer1.gpuBuffer = gRes[5];
 
 	ibv.Format = DXGI_FORMAT_R16_UINT;
 	ibv.SizeInBytes = indexBuffer.size;
@@ -67,13 +76,20 @@ void CoreMesh::Uploaded(ID3D12Resource** gRes, int ioffset, int voffset)
 	vbv[1].BufferLocation = gRes[2]->GetGPUVirtualAddress() + voffset * sizeof(*uvs);;
 	vbv[1].StrideInBytes = 8;
 
-	vbv[2].SizeInBytes = pnbBuffer.size;
-	vbv[2].BufferLocation = gRes[3]->GetGPUVirtualAddress() + voffset * sizeof(*pnbs);;
-	vbv[2].StrideInBytes = 12;
+	vbv[2].SizeInBytes = tfBuffer.size;
+	vbv[2].BufferLocation = gRes[3]->GetGPUVirtualAddress() + voffset * sizeof(*tfs);;
+	vbv[2].StrideInBytes = 16;
 
-	vbv[3].SizeInBytes = tfBuffer.size;
-	vbv[3].BufferLocation = gRes[4]->GetGPUVirtualAddress() + voffset * sizeof(*tfs);;
-	vbv[3].StrideInBytes = 16;
+	vbv[3].SizeInBytes = pnbBuffer.size;
+	vbv[3].BufferLocation = gRes[4]->GetGPUVirtualAddress() + voffset * sizeof(*pnbs);;
+	vbv[3].StrideInBytes = 12;
+
+	if (pnbs1)
+	{
+		vbv[4].SizeInBytes = tfBuffer.size;
+		vbv[4].BufferLocation = gRes[5]->GetGPUVirtualAddress() + voffset * sizeof(*pnbs1);;
+		vbv[4].StrideInBytes = 12;
+	}
 
 }
 
@@ -88,6 +104,8 @@ CoreMesh::~CoreMesh()
 	delete[] vertices;
 	delete[] pnbs;
 	delete[] indices;
+	if (pnbs1)
+		delete[] pnbs1;
 	//delete[] tfs;
 	uvs = nullptr;
 	vertices = nullptr;
@@ -97,6 +115,8 @@ CoreMesh::~CoreMesh()
 	indexBuffer.gpuBuffer->Release();
 	vertBuffer.gpuBuffer->Release();
 	uvBuffer.gpuBuffer->Release();
-	pnbBuffer.gpuBuffer->Release();
 	tfBuffer.gpuBuffer->Release();
+	pnbBuffer.gpuBuffer->Release();
+	if (pnbBuffer1.gpuBuffer) 	pnbBuffer1.gpuBuffer->Release();
+
 }

@@ -1,7 +1,9 @@
 #pragma once
 #include "Metrics.h"
+#include "ThirdParty.h"
 
 #include <iostream>
+#include <vector>
 namespace RLL
 {
 	enum EVENT_TYPE
@@ -105,6 +107,8 @@ namespace RLL
 	};
 	class IFrame;
 	class IPaintDevice;
+	class ISVGBuilder;
+	class ISVG;
 	void Initiate(int flag = 0);
 	int GetFlags();
 	wchar_t* GetLocale();
@@ -130,7 +134,7 @@ namespace RLL
 
 	class IBase
 	{
-		int _ref_count = 1;
+		int _ref_count = 0;
 		virtual void Dispose() = 0;
 		char* error = nullptr;
 	protected:
@@ -148,7 +152,7 @@ namespace RLL
 		void Release()
 		{
 			_ref_count--;
-			if (!_ref_count)
+			if (_ref_count < 0)
 			{
 				//std::cout << "Counter Dispose:\t" << this << std::endl;
 				Dispose();
@@ -156,7 +160,76 @@ namespace RLL
 		}
 		char* GetLastError() { return error; };
 	};
+	struct FlowOut
+	{
+		RLL::Size size;
+		RLL::Size dynRation;
+	};
+	class RenderList
+	{
+	public:
+		void operator() (Math3D::Matrix4x4 globalTransform, RLL::ISVG* renderItem, int zIndex = 0)
+		{
+			join(globalTransform, renderItem, zIndex);
+		};
+		void join(Math3D::Matrix4x4 globalTransform, RLL::ISVG* renderItem, int zIndex = 0)
+		{
+		}
+	};
+	class IElement
+	{
+	public:
+		//return true if its size is control by parent
+		virtual bool Flow(ElementProps& parentProps, RLL::FlowOut& out_Size) { return false; };
+		//virtual RLL::Size Size(ElementProps* parentProps) = 0;
+		virtual LANG_DIRECTION Direction() = 0;
+		virtual UScriptCode Script() { return USCRIPT_COMMON; };
+		virtual void Place(Math3D::Matrix4x4* parentTransform, RenderList renderList) = 0;
+	};
+	struct ElementData
+	{
+		IElement* element = nullptr;
+		RLL::FlowOut out;
+		RLL::Size finalSize;
+		float dynSize = 0;
+		LANG_DIRECTION direction;
 
+	};
+
+	class BlockLayout //: public IElement
+	{
+	private:
+		struct BIDIPart
+		{
+			std::vector<ElementData> parts;
+			LANG_DIRECTION direction = LANG_DIRECTION_LR;
+		};
+		struct LinePart
+		{
+			std::vector<ElementData> parts;
+			std::vector<BIDIPart> bidis;
+			RLL::Size size;
+			RLL::Size dynSizeItgr;
+		};
+
+		BlockProps properties;
+		BlockMetrics metrics;
+
+		RLL::Size contentSize;
+		LANG_DIRECTION direction = LANG_DIRECTION_LR_TB;
+		LINE_ALIGN lineAlign = LINE_ALIGN_START;
+		PARA_ALIGN paraAlign = PARA_ALIGN_START;
+
+		std::vector<ElementData> elements;
+		std::vector<LinePart> lines;
+
+	public:
+		RLL::Size Size(ElementProps* parentProps);
+		LANG_DIRECTION Direction();
+		ScriptCode Script();
+		void Place(Math3D::Matrix4x4* parentTransform, RenderList renderList);
+		bool Flow(ElementProps& parentProps, RLL::FlowOut& out_Size);
+	};
 
 
 }

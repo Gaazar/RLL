@@ -117,7 +117,7 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	auto ffact = RLL::CreateFontFactory(paintDevice);
 	auto fc_tms = ffact->LoadFromFile("c:/windows/fonts/times.ttf");
 	auto fc_rob = ffact->LoadFromFile("D:/Download/Roboto/Roboto-Regular.ttf");
-	auto fc_dsm = ffact->LoadFromFile("C:/Users/Tibyl/AppData/Local/Microsoft/Windows/Fonts/DroidSansMono.ttf");
+	auto fc_dsm = ffact->LoadFromFile("C:/Users/GazaKeb/AppData/Local/Microsoft/Windows/Fonts/DroidSansMono.ttf");
 	auto fc_msyh = ffact->LoadFromFile("c:/windows/fonts/msyh.ttc");
 	auto fc_emj = ffact->LoadFromFile("c:/windows/fonts/seguiemj.ttf");
 	auto fc_khm = ffact->LoadFromFile("F:/libs/harfbuzz-5.3.1/test/subset/data/fonts/Khmer.ttf");
@@ -134,15 +134,15 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 	gb->Reset();
 	auto go1 = (D3D12Geometry*)fc_msyh->GetPlainGlyph(U'M');
 
-	auto tmat = Matrix4x4::Scaling(1.234) * Matrix4x4::Translation({ 200,300 }) * Matrix4x4::Rotation(1, 0, 0);
+	auto tmat = Matrix4x4::Scaling(1.234f) * Matrix4x4::Translation({ 200,300 }) * Matrix4x4::Rotation(1, 0, 0);
 	RLL::ColorGradient cg;
 	cg.colors[0] = { 1,1,0,0 };
-	cg.colors[1] = { 0.3,1,0.3,0 };
+	cg.colors[1] = { 0.3f,1,0.3f,0 };
 	cg.positions[1] = 1;
 	auto br_yg = paintDevice->CreateRadialBrush({ 0,0 }, 1.0, &cg);
 
-	cg.colors[0] = { 1,0.87,0,0 };
-	cg.colors[1] = { 1,0.27,0.3,0 };
+	cg.colors[0] = { 1,0.87f,0,0 };
+	cg.colors[1] = { 1,0.27f,0.3f,0 };
 	auto br_dps = paintDevice->CreateRadialBrush({ 0,0 }, 1, &cg);
 	br_dps->Release();
 	auto br_yg_tex = paintDevice->CreateRadialBrush({ 0.5,0.5 }, 1, &cg);
@@ -160,7 +160,9 @@ TextLayout. 这次职业生涯规划。\
 Français Abc defgh a123c 1.2f.\
  nbsp left. done? emj\
 कोहियर से नमस्ते!😎🧑🏿🧑🏿🥳|אָלֶף־בֵּית 🧑🏿🥳עִבְרִי/ ltr🥵rtl |اللغة العربية/\
- Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่? RLO‮fdp.exe‬LRO"
+ Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่? RLO‮fdp.exe‬PDF,LRO‭|اللغة العربية/‬PDF\
+微笑世界•处处D\
+微笑世界·处处D"
 		, { 330,50 }, fs_df);
 	//tl->Break();//TextLayout文本布局。Abc defgh a123c 1.234ff. nbsp left. done? emj😎🧑🏿🧑🏿
 	//tl->Metrics();
@@ -306,10 +308,14 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_NCHITTEST:
 		// When we have no border or title bar, we need to perform our
 		// own hit testing to allow resizing and moving.
+	{
+		bool nchit = (GET_Y_LPARAM(lp) - this->viewRect.top) < 33;
 		return hit_test(hwnd, POINT{
 			GET_X_LPARAM(lp),
 			GET_Y_LPARAM(lp)
-			}, false, true);//!!!!!! TO MODIFY
+			}, nchit, true);//!!!!!! TO MODIFY
+	}
+	break;
 	case WM_NCACTIVATE:
 		if (!composition_enabled()) {
 			// Prevents window frame reappearing on window activation
@@ -423,7 +429,9 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_MOUSEWHEEL:
 	{
 		auto dta = GET_WHEEL_DELTA_WPARAM(wp);
-		cam_s *= (1 + (float)dta / 120 * 0.1f);
+		float ds = (1 + (float)dta / 120 * 0.1f);
+		Vector2 mouse{ GET_X_LPARAM(lp) / dpiScaleFactor.x,GET_Y_LPARAM(lp) / dpiScaleFactor.y };
+		cam_s *= ds;
 		vtf = Matrix4x4::TRS({ cam_t.x,cam_t.y,0 }, Quaternion::identity(), { cam_s,cam_s,cam_s });
 
 		//rbf_root.Sync(cbf_root);
@@ -461,6 +469,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_EXITSIZEMOVE:
 		int x = GET_X_LPARAM(lp);
 		int y = GET_Y_LPARAM(lp);
+		AquireWindowRect();
 
 		break;
 

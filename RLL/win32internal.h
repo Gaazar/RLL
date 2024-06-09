@@ -48,8 +48,8 @@ struct Frame : public RLL::IFrame
 
 struct ResourceBlob
 {
-	int size;
-	void* data;
+	int size = 0;
+	void* data = nullptr;
 	ID3D12Resource* gpuBuffer;
 	void Sync(void* data)
 	{
