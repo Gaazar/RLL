@@ -26,6 +26,14 @@ Vector2 cam_t = { 0,0 };
 Vector cam_s = 1;
 Vector2 cam_md = { -1,0 };
 Matrix4x4 vtf;
+LARGE_INTEGER perfc = { 0 };
+LARGE_INTEGER perff = { 0 };
+float TimeSecond()
+{
+	LARGE_INTEGER pc = { 0 };
+	QueryPerformanceCounter(&pc);
+	return (pc.QuadPart - perfc.QuadPart) / (float)perff.QuadPart;
+}
 
 #pragma region util
 bool PointInRect(Math3D::Vector2 pt, Vector4 r)
@@ -70,6 +78,8 @@ void RLL::Initiate(int flags)
 	SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 
 	GetUserDefaultLocaleName(locale, sizeof(locale));
+	QueryPerformanceCounter(&perfc);
+	QueryPerformanceFrequency(&perff);
 	//TextLayoutInit();
 
 }
@@ -163,7 +173,7 @@ Français Abc defgh a123c 1.2f.\
  Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่? RLO‮fdp.exe‬PDF,LRO‭|اللغة العربية/‬PDF\
 微笑世界•处处D\
 微笑世界·处处D"
-		, { 330,50 }, fs_df);
+, { 330,50 }, fs_df);
 	//tl->Break();//TextLayout文本布局。Abc defgh a123c 1.234ff. nbsp left. done? emj😎🧑🏿🧑🏿
 	//tl->Metrics();
 	cm_t_tly = tl->Commit(paintDevice);
@@ -290,6 +300,17 @@ Français Abc defgh a123c 1.2f.\
 	//rbo_circ.Sync(cbo_t_circ);
 	//rbf_root.Sync(cbf_root);
 }
+VOID CALLBACK TimerProc(
+	_In_  HWND hwnd,
+	_In_  UINT uMsg,
+	_In_  UINT_PTR idEvent,
+	_In_  DWORD dwTime
+)
+{
+	RECT rect;
+	GetClientRect(hwnd, &rect);
+	InvalidateRect(hwnd, &rect, TRUE);
+}
 LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
 
@@ -298,6 +319,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_CREATE:
 		//std::cout << "WMC\n";
 		hWnd = hwnd;
+		SetTimer(hwnd, 1, 20, TimerProc);
 		break;
 	case WM_NCCALCSIZE:
 	{
@@ -335,6 +357,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		paintCtx->SetTransform(Matrix4x4::Translation({ 0,-200,0 }) * vtf);
 		paintCtx->DrawSVG(cm_t_tly);
 		paintCtx->EndDraw();
+
 		//SUCCESS(dCompDevice->Commit());
 		break;
 	}
@@ -362,9 +385,9 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_MBUTTONUP:
 		//case WM_SETCURSOR:
 	{
-		if(msg == WM_MBUTTONUP)
+		if (msg == WM_MBUTTONUP)
 			_DBG_D3DLIVE_OBJ();
-		
+
 		//WndProc(hwnd, WM_MOUSEMOVE, wp, lp);
 		Vector2 mouse{ GET_X_LPARAM(lp) / dpiScaleFactor.x,GET_Y_LPARAM(lp) / dpiScaleFactor.y };
 		POINT cm;

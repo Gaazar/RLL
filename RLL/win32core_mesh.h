@@ -85,7 +85,9 @@ struct CBObject
 {
 	Math3D::Matrix4x4 objToWorld;
 	int sampleType;
-	float lerpTime;
+	float timeBegin;
+	float timePeriod;
+	int timeLoop;
 };
 class D3D12PaintDevice;
 struct CoreMesh
@@ -104,11 +106,8 @@ struct CoreMesh
 		VERTEX_FORMAT_UV2,
 		VERTEX_FORMAT_UV3,
 	};
-	Math3D::Vector2* vertices = nullptr;
-	Math3D::Vector2* uvs = nullptr;
-	Math3D::Vector4* tfs = nullptr;
-	Math3D::Vector3* pnbs = nullptr;
-	Math3D::Vector3* pnbs1 = nullptr;
+	Math3D::Vector3* vertices = nullptr; // x,y,normal
+	Math3D::Vector3* pbpb = nullptr;
 	unsigned short* indices = nullptr;
 
 	unsigned int vertCount;
@@ -117,14 +116,11 @@ struct CoreMesh
 	SubMesh* subMeshs;
 
 	ResourceBlob vertBuffer;
-	ResourceBlob uvBuffer;
-	ResourceBlob pnbBuffer;
-	ResourceBlob pnbBuffer1;
-	ResourceBlob tfBuffer;
+	ResourceBlob pbpbBuffer;
 	ResourceBlob indexBuffer;
 
 	D3D12_INDEX_BUFFER_VIEW ibv;
-	D3D12_VERTEX_BUFFER_VIEW vbv[5];
+	D3D12_VERTEX_BUFFER_VIEW vbv[2];
 
 public:
 	CoreMesh()
@@ -132,16 +128,12 @@ public:
 		idxCount = vertCount = subMeshCount = 0;
 		vertices = nullptr;
 		indices = nullptr;
-		uvs = nullptr;
-		pnbs = nullptr;
-		tfs = nullptr;
+
 		subMeshs = nullptr;
 		vertBuffer.data = reinterpret_cast<void**>(&vertices);
+		pbpbBuffer.data = reinterpret_cast<void**>(&pbpb);
 		indexBuffer.data = reinterpret_cast<void**>(&indices);
-		uvBuffer.data = reinterpret_cast<void**>(&uvs);
-		tfBuffer.data = reinterpret_cast<void**>(&tfs);
-		pnbBuffer.data = reinterpret_cast<void**>(&pnbs);
-		pnbBuffer1.data = reinterpret_cast<void**>(&pnbs1);
+
 	}
 	struct SubMesh
 	{

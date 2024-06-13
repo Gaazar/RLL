@@ -255,6 +255,7 @@ void D3D12FramePaintContext::BeginDraw()
 		Matrix4x4::Scaling({ 1,-1,1 }) *
 		Matrix4x4::Orthographic(viewport.Width, viewport.Height, 1, 1000);
 	cbFrame.vwh = { (unsigned int)viewport.Width,(unsigned int)viewport.Height };
+	cbFrame.time = TimeSecond();
 	gpuCbFrame.Sync(cbFrame);
 
 	bool& msaa = device->msaaEnable;

@@ -32,6 +32,7 @@ struct Brush
     float pad;
     float pos[8];
     float4 stops[8];
+    float3x2 transform;
 };
 struct Path
 {
@@ -49,26 +50,22 @@ struct Curve
 
 struct VertexIn
 {
-    float2 PosL : POSITION;
-	// float3 norms : NORMAL;//vNormal uvNormal uvNorLen
-    float2 uv : TEXCOORD;
-    float4 tf : TENSOR;
-    float3 pnc : PNB0; // path normal color
-    float3 pnc1 : PNB1;
+    float3 pLn : POSITION;//local position, normal
+    int4 pbpb : PBPB; // path_from brush_fron path_to brush_to
 };
 
 struct VertexOut
 {
-    float4 PosH : SV_POSITION;
-    float2 uv : TEXCOORD;
-    nointerpolation float3 pnc : PNB0;
-    nointerpolation float3 pnc1 : PNB1;
+    float4 pH : SV_POSITION;
+    float2 uv;
+    nointerpolation int4 pbpb : PBPB;
 };
 
 Texture2D g_texture[1024] : register(t0); // albedo normal ORM
 StructuredBuffer<Path> glyphs : register(t0, space1);
 StructuredBuffer<Curve> curves : register(t1, space1);
 StructuredBuffer<Brush> brushes : register(t1, space2);
+StructuredBuffer<float3x2> bg_tf : register(t1, space3);
 
 float4 sampleColor(Brush c, float p)
 {
@@ -126,3 +123,4 @@ float4 gradientSwe(Brush c, float2 uv, float2 center, float axis)
     float angel = atan2(uv.x, uv.y);
     return sampleColor(c, frac((angel / 3.1415926 / 2) + axis - 0.25));
 }
+

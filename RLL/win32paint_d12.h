@@ -60,6 +60,7 @@ public:
 	float pad = 0;
 	float pos[8] = { 0 };
 	RLL::Color stops[8] = {};
+	Math3D::Matrix3x2 transform;
 	static D3D12GPUBrush Foreground()
 	{
 		D3D12GPUBrush grads;
@@ -188,10 +189,8 @@ public:
 struct D3D12GeometryMesh
 {
 	std::vector<short> indices;
-	std::vector<Math3D::Vector2> verts;
-	std::vector<Math3D::Vector2> uv;
-	std::vector<Math3D::Vector2> path_norm;
-	Math3D::Matrix4x4 uvTransform = Math3D::Matrix4x4::Identity();
+	std::vector<Math3D::Vector3> verts;
+	std::vector<Math3D::Int4> pbpb;
 	void MakeIndex(int off = 0)
 	{
 		std::vector<short> idcs;
@@ -229,19 +228,20 @@ struct D3D12GeometryMesh
 		}
 		indices.insert(indices.end(), idcs.begin(), idcs.end());
 	}
-	void SetPath(int index)
+	void SetPath(int index, int to = 0)
 	{
-		for (auto& i : path_norm)
-			i.x = index;
+		if (to)
+			for (auto& i : pbpb)
+				i.z = index;
+		else
+			for (auto& i : pbpb)
+				i.x = index;
 	}
 	void MakeNormal()
 	{
-		if (path_norm.size() != verts.size())
-			path_norm.resize(verts.size());
-
 		for (int v = 0; v < verts.size(); v++)
 		{
-			Math3D::Vector2 v_a, v_b;
+			Math3D::Vector3 v_a, v_b;
 			if (v == 0)
 			{
 				v_a = verts[0] - verts[verts.size() - 1];
@@ -258,23 +258,15 @@ struct D3D12GeometryMesh
 			{
 				v_b = verts[v] - verts[v + 1];
 			}
+			v_a.z = v_b.z = 0;
 			auto norm = (v_a.Normalized() + v_b.Normalized());
-			path_norm[v].y = atan2f(norm.y, norm.x);
-		}
-	}
-	void MakeUV(Math3D::Matrix4x4& t)
-	{
-		uvTransform = t;
-		uv.reserve(verts.size());
-		for (auto& i : verts)
-		{
-			//auto u = i * t;
-			uv.push_back(i * t);
+			verts[v].z = atan2f(norm.y, norm.x);
 		}
 	}
 	float GetArea() { return 0; };
 	float GetCircumference() { return 0; };
 };
+
 
 struct PathBuffer
 {
@@ -293,12 +285,17 @@ struct PathBuffer
 struct MeshGroup
 {
 	std::vector<CoreMesh*> meshs;
-	ID3D12Resource* resource[6] = {0};
-	ResourceBlob uploads[6] = {0};
+	ID3D12Resource* resource[6] = { 0 };
+	ResourceBlob uploads[6] = { 0 };
 };
 class D3D12PaintContext;
 class D3D12FramePaintContext;
-
+enum AnimationType
+{
+	Clamp,
+	Mirror,
+	Repeat
+};
 class D3D12PaintDevice : public RLL::IPaintDevice
 {
 	friend class D3D12GeometryBuilder;
@@ -412,6 +409,7 @@ public:
 	void EndDraw();
 	void SetTransform(Math3D::Matrix4x4& tfCache);
 	void DrawSVG(RLL::ISVG* svg);
+	void FillGeometry(IGeometry* geom, IBrush* br);
 	void DrawAVG(RLL::IAVG* avg);
 	void DrawMorph() { NOIMPL; };
 	void Flush();
@@ -503,8 +501,10 @@ public:
 	void Triangle(Math3D::Vector2 p0, Math3D::Vector2 p1, Math3D::Vector2 p2, bool inv);
 	void RoundRectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, Math3D::Vector2 radius, bool inv);
 
-	RLL::IGeometry* Fill(Math3D::Matrix4x4* bgTransform);
-	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type, Math3D::Matrix4x4* bgTransform);
+	RLL::IGeometry* Fill();
+	RLL::IGeometry* Fill(bool opTband);
+	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type);
+	RLL::IGeometry* Stroke(float stroke, RLL::StrokeStyle* type, bool opTband);
 	void Reset();
 	void Dispose();
 
@@ -517,12 +517,12 @@ public:
 	D3D12PaintDevice* device;
 	int id = -1;
 	CoreMesh* mesh = nullptr;
+	std::vector<D3D12Brush> brushes;
 	D3D12SVG(D3D12PaintDevice* dev) :device(dev) {  };
 public:
 	void Dispose();
 
 };
-
 class D3D12SVGBuilder : public::RLL::ISVGBuilder
 {
 	friend class D3D12PaintDevice;
@@ -588,6 +588,51 @@ public:
 	void Push(RLL::ISVG* svg, Math3D::Matrix4x4* transform = nullptr);
 	void Reset();
 	RLL::ISVG* Commit();
+	void Dispose();
+};
+
+class D3D12AVG :public RLL::IAVG
+{
+	friend class D3D12SVGBuilder;
+public:
+	D3D12PaintDevice* device;
+	int id = -1;
+	CoreMesh* mesh = nullptr;
+	D3D12AVG(D3D12PaintDevice* dev) :device(dev) {  };
+public:
+	void Dispose();
+
+};
+
+struct D3D12Morph
+{
+	D3D12PaintDevice* device;
+	float begin, period;
+	AnimationType type;
+	D3D12Geometry* from_geom;
+	D3D12Brush* from_brush;
+	D3D12Geometry* to_geom;
+	D3D12Brush* to_brush;
+
+	CoreMesh* mesh;
+	bool Check()
+	{
+		return from_geom->path->hl == from_geom->path->vl && from_geom->path->hl == to_geom->path->hl;
+	}
+	bool BuildMesh();
+};
+
+class D3D12AVGBuilder : public::RLL::IAVGBuilder
+{
+	friend class D3D12PaintDevice;
+	D3D12PaintDevice* device = nullptr;
+
+	D3D12AVGBuilder(D3D12PaintDevice* dev) :device(dev) { };
+public:
+	void Push(RLL::IGeometry* geom, RLL::IBrush* brush, Math3D::Matrix4x4* transform = nullptr);
+	void Push(D3D12Morph& geom);
+	void Reset();
+	RLL::IAVG* Commit();
 	void Dispose();
 };
 

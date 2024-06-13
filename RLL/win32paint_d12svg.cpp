@@ -51,17 +51,13 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 		return nullptr;
 	}
 
-	vector<Vector2> uv;
-	vector<Vector2> pos;
-	vector<Vector3> pnb;
-	vector<Vector4> tfs;
+	vector<Vector3> posn;
+	vector<Int4> pbpb;
 	vector<short> ind;
 	int vb = 0, ib = 0;
-	uv.reserve(512);
-	pos.reserve(512);
-	pnb.reserve(512);
+	posn.reserve(512);
+	pbpb.reserve(512);
 	ind.reserve(512);
-	tfs.reserve(512);
 
 	for (auto& i : layers)
 	{
@@ -72,32 +68,30 @@ RLL::ISVG* D3D12SVGBuilder::Commit()
 			//uvMat._41 = i.transform._41;
 			//uvMat._42 = i.transform._42;
 			D3D12GeometryMesh& m = *i.geometry->mesh;
-			auto uvMat = (i.transform).Inversed() * m.uvTransform;
-			for (auto& n : m.verts)
-			{
-				pos.push_back(n * i.transform);
-				tfs.push_back({ uvMat._11,uvMat._12,uvMat._21,uvMat._22 });
-			}
-			for (auto& n : m.uv)
-			{
-				uv.push_back(n);
-			}
-			for (auto& n : m.indices)
-				ind.push_back(n + vb);
 			auto normT = i.transform;
 			normT._41 = 0;
 			normT._42 = 0;
 			normT._43 = 0;
-			for (auto& n : m.path_norm)
+			for (auto& n : m.verts)
 			{
+				Vector3 novp = n;
+				novp.z = 0;
+				novp = novp * i.transform;
 				auto norm = Vector2(cosf(n.y), sinf(n.y));
 				norm = norm * normT;
-				auto ny = atan2f(norm.y, norm.x);
+				auto novn = atan2f(norm.y, norm.x);
+				novp.z = novn;
+				posn.push_back(novp);
+			}
+			for (auto& n : m.indices)
+				ind.push_back(n + vb);
 
+			for (auto& n : m.pbpb)
+			{
 				if (i.brush)
-					pnb.push_back({ n.x,ny,(float)i.brush->id });
+					pbpb.push_back({ n.x,i.brush->id,0,0 });
 				else
-					pnb.push_back({ n.x,ny,0.f });
+					pbpb.push_back({ n.x,0,0,0 });
 			}
 
 			vb += m.verts.size();

@@ -151,6 +151,7 @@
     <ClCompile Include="BlockLayout.cpp" />
     <ClCompile Include="FontStack.cpp" />
     <ClCompile Include="TextLayout.cpp" />
+    <ClCompile Include="win32paint_d12avg.cpp" />
     <ClCompile Include="win32paint_d12context.cpp" />
     <ClCompile Include="win32paint_d12device.cpp" />
     <ClCompile Include="win32paint_d12geometry.cpp" />
@@ -193,6 +194,7 @@
     <None Include="shader\core.hlsl">
       <FileType>Document</FileType>
     </None>
+    <None Include="shader\core_pixel.hlsli" />
     <None Include="shader\path.hlsli" />
   </ItemGroup>
   <ItemGroup>

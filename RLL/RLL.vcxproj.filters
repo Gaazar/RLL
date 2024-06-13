@@ -73,6 +73,9 @@
     <ClCompile Include="BlockLayout.cpp">
       <Filter>src\shared</Filter>
     </ClCompile>
+    <ClCompile Include="win32paint_d12avg.cpp">
+      <Filter>src\win32impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Metrics.h">
@@ -156,6 +159,9 @@
       <Filter>src\shader</Filter>
     </None>
     <None Include="shader\dbgWire.hlsl">
+      <Filter>src\shader</Filter>
+    </None>
+    <None Include="shader\core_pixel.hlsli">
       <Filter>src\shader</Filter>
     </None>
   </ItemGroup>

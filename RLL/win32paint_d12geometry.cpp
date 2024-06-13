@@ -419,8 +419,7 @@ void D3D12GeometryBuilder::ArcTo(Math3D::Vector2 center, Math3D::Vector2 radius,
 		QuadraticTo(c.control + center, c.end + center);
 	}
 }
-
-IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* bgTransform)
+IGeometry* D3D12GeometryBuilder::Fill(bool optBand)
 {
 	if (opening)
 	{
@@ -443,39 +442,40 @@ IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* bgTransform)
 	PathBuffer* buffer = &device->paths;
 	vector<D3D12GPUCurve> hBand;
 	vector<D3D12GPUCurve> vBand;
-	auto tf = Matrix4x4::Identity();
-	if (bgTransform)
-		tf = *bgTransform;
 	std::vector<D3D12GPUCurve> tfCurve;
 	for (auto& i : paths)
 	{
 		for (auto& c : i.curves)
 		{
 			D3D12GPUCurve fc;
-			fc.begin = c.begin * tf;
-			fc.control = c.control * tf;
-			fc.end = c.end * tf;
+			fc.begin = c.begin;
+			fc.control = c.control;
+			fc.end = c.end;
 			tfCurve.push_back(fc);
 		}
 	}
 	for (auto& c : tfCurve)
 	{
-		if (!c.IsHorizontal())
+		if (!c.IsHorizontal() || !optBand)
 		{
 			hBand.push_back(c);
 		}
-		if (!c.IsVertical())
+		if (!c.IsVertical() || !optBand)
 		{
 			vBand.push_back(c);
 		}
 
 	}
-	sort(hBand.begin(), hBand.end(), [](D3D12GPUCurve& l, D3D12GPUCurve& r) {return l.Max().x > r.Max().x; });
-	sort(vBand.begin(), vBand.end(), [](D3D12GPUCurve& l, D3D12GPUCurve& r) {return l.Max().y > r.Max().y; });
+	if (optBand)
+	{
+		sort(hBand.begin(), hBand.end(), [](D3D12GPUCurve& l, D3D12GPUCurve& r) {return l.Max().x > r.Max().x; });
+		sort(vBand.begin(), vBand.end(), [](D3D12GPUCurve& l, D3D12GPUCurve& r) {return l.Max().y > r.Max().y; });
+	}
 	p.hi = buffer->curves.size();
 	p.hl = hBand.size();
 	p.vi = p.hi + p.hl;
 	p.vl = vBand.size();
+
 	ifGeom->pathID = device->AllocatePath(p);
 	ifGeom->path = &buffer->paths[ifGeom->pathID];
 	for (auto& c : hBand)
@@ -487,15 +487,24 @@ IGeometry* D3D12GeometryBuilder::Fill(Math3D::Matrix4x4* bgTransform)
 		buffer->curves.push_back(c);
 	}
 
-	D3D12GeometryMesh& cvx = *ifGeom->mesh;
 
-	convexHull(points, cvx.verts);
-	simplifyConvex(cvx.verts, 6);
+	D3D12GeometryMesh& cvx = *ifGeom->mesh;
+	std::vector<Vector2> cvxv;
+
+	convexHull(points, cvxv);
+	simplifyConvex(cvxv, 6);
+	for (auto& i : cvxv)
+	{
+		cvx.verts.emplace_back(i.x, i.y, 0);
+	}
 	cvx.MakeIndex();
 	cvx.MakeNormal();
-	cvx.MakeUV(tf);
 	cvx.SetPath(ifGeom->pathID);
 	return ifGeom;
+}
+IGeometry* D3D12GeometryBuilder::Fill()
+{
+	return Fill(true);
 }
 RLL::StrokeStyle _internal_default_stroke_style;
 void StrokeQBezier(IGeometryBuilder* bd, D3D12GPUCurve& i, float hfstroke)
@@ -539,7 +548,7 @@ void StrokeQBezier(IGeometryBuilder* bd, D3D12GPUCurve& i, float hfstroke)
 	}
 
 }
-RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* type, Math3D::Matrix4x4* bgTransform)
+RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* type)
 {
 	//return nullptr;
 	if (type == nullptr)
@@ -899,7 +908,7 @@ RLL::IGeometry* D3D12GeometryBuilder::Stroke(float stroke, RLL::StrokeStyle* typ
 	}
 
 
-	auto res = bd->Fill(bgTransform);
+	auto res = bd->Fill();
 	bd->Release();
 	return res;
 };

@@ -1,25 +1,32 @@
-#include "path.hlsli"
-SamplerState g_sampler : register(s0);
+#include "core_pixel.hlsli"
 
 float4 PS(VertexOut pin) : SV_Target
 {
     float2 uv = pin.uv;
     float3 uvw = float3(pin.uv.x, pin.uv.y, 1);
-
+    float p = (time - timeBegin) / timePeriod;
+    
     float cov = 0;
     float2 pixelsPerEm = float2(1.0 / fwidth(pin.uv.x),
 								1.0 / fwidth(pin.uv.y));
     int glyph_index = (int) pin.pnc.x;
     int curve_index = glyphs[glyph_index].hi;
+    int glyph_index1 = (int) pin.pnc1.x;
+    int curve_index1 = glyphs[glyph_index1].hi;
+
     int curve_length = glyphs[glyph_index].hl;
     for (int i = 0; i < curve_length; i++)
     {
 
-        float2 cb = curves[curve_index + i].begin - uv;
-        float2 cc = curves[curve_index + i].control - uv;
-        float2 ce = curves[curve_index + i].end - uv;
-        if (max(max(cb.x, cc.x), ce.x) * pixelsPerEm.x < -0.5)
-            break;
+        float2 cb = (1.f - p) * curves[curve_index + i].begin 
+                  + p * curves[curve_index1 + i].begin - uv;
+        float2 cc = (1.f - p) * curves[curve_index + i].control 
+                  + p * curves[curve_index1 + i].control - uv;
+        float2 ce = (1.f - p) * curves[curve_index + i].end 
+                  + p * curves[curve_index1 + i].end - uv;
+        //Animation curves are not sorted
+        //if (max(max(cb.x, cc.x), ce.x) * pixelsPerEm.x < -0.5)
+        //    break;
 
         uint code = (0x2E74U >> (((cb.y > 0.0) ? 2U : 0U) +
 								 ((cc.y > 0.0) ? 4U : 0U) + ((ce.y > 0.0) ? 8U : 0U))) &
@@ -58,14 +65,19 @@ float4 PS(VertexOut pin) : SV_Target
     }
     curve_index = glyphs[glyph_index].vi;
     curve_length = glyphs[glyph_index].vl;
+    curve_index1 = glyphs[glyph_index1].vi;
 
     for (i = 0; i < curve_length; i++)
     {
-        float2 cb = curves[curve_index + i].begin - uv;
-        float2 cc = curves[curve_index + i].control - uv;
-        float2 ce = curves[curve_index + i].end - uv;
-        if (max(max(cb.y, cc.y), ce.y) * pixelsPerEm.y < -0.5)
-            break;
+        float2 cb = (1.f - p) * curves[curve_index + i].begin 
+                  + p * curves[curve_index1 + i].begin - uv;
+        float2 cc = (1.f - p) * curves[curve_index + i].control 
+                  + p * curves[curve_index1 + i].control - uv;
+        float2 ce = (1.f - p) * curves[curve_index + i].end 
+                  + p * curves[curve_index1 + i].end - uv;
+        //Animation curves are not sorted
+        //if (max(max(cb.y, cc.y), ce.y) * pixelsPerEm.y < -0.5)
+        //    break;
         uint code = (0x2E74U >> (((cb.x > 0.0) ? 2U : 0U) +
 								 ((cc.x > 0.0) ? 4U : 0U) + ((ce.x > 0.0) ? 8U : 0U))) &
 					3U;
@@ -98,26 +110,9 @@ float4 PS(VertexOut pin) : SV_Target
     float gscl = sqrt(clamp(abs(cov) * 0.5, 0.0, 1.0));
 	// float gscl = pow(clamp(abs(cov), 0.0, 1.0), 0.4545); //gamma
 	// float gscl = clamp(abs(cov), 0, 1);
-    float4 color = float4(1, 0, 1, 1);
-    Brush cg = brushes[pin.pnc.z];
-    switch (cg.type & 0xff)
-    {
-        case 0:
-            color = dColor;
-            break;
-        case 1:
-            color = gradientDir(cg, uv, cg.center);
-            break;
-        case 2:
-            color = gradientRad(cg, uv, cg.center, cg.radius, cg.focus);
-            break;
-        case 3:
-            color = gradientSwe(cg, uv, cg.center, cg.radius);
-            break;
-        case 4:
-            color = g_texture[cg.texid].Sample(g_sampler, uv);
-            break;
-    }
+    float4 color = (1.f - p) * sampleBrush(brushes[pin.pnc.z], uv) +
+                    p * sampleBrush(brushes[pin.pnc.z], uv);
+
 	// color = float4(1,0,0,0);
 	//  return float4(gradientSwe(uv,float2(0.5,0.50),time * 0.2).xyz * gscl,1);
 	// return float4(frac(uv), 0, gscl * 0.5 + 0.5);

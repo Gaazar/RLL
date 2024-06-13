@@ -46,6 +46,7 @@ inline ComPtr<ID3DBlob>  CompileShader(
 	if (errors != nullptr)
 	{
 		OutputDebugStringA((char*)errors->GetBufferPointer());
+		std::cout << ((char*)errors->GetBufferPointer()) << std::endl;;
 	}
 	//ThrowIfFailed(hr);
 
@@ -237,10 +238,7 @@ void D3D12PaintDevice::LoadShaders()
 	inputLayoutDesc =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TENSOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "PNB", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "PNB", 1, DXGI_FORMAT_R32G32B32_FLOAT, 4, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "PBPB", 0, DXGI_FORMAT_R32G32B32_UINT, 1, 0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 	ComPtr<ID3DBlob> vbc = CompileShader(SHADER_CORE_VERTEX, nullptr, "VS", "vs_5_1");
 	ComPtr<ID3DBlob> pbc = CompileShader(SHADER_CORE, nullptr, "PS", "ps_5_1");

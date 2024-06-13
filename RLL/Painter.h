@@ -68,8 +68,8 @@ namespace RLL
 		virtual void Rectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, bool inv = false) = 0;
 		virtual void Triangle(Math3D::Vector2 p0, Math3D::Vector2 p1, Math3D::Vector2 p2, bool inv = false) = 0;
 		virtual void RoundRectangle(Math3D::Vector2 lt, Math3D::Vector2 rb, Math3D::Vector2 radius, bool inv = false) = 0;
-		virtual IGeometry* Fill(Math3D::Matrix4x4* bgTransform = nullptr) = 0;
-		virtual IGeometry* Stroke(float stroke = 1, StrokeStyle* type = nullptr, Math3D::Matrix4x4* bgTransform = nullptr) = 0;
+		virtual IGeometry* Fill() = 0;
+		virtual IGeometry* Stroke(float stroke = 1, StrokeStyle* type = nullptr) = 0;
 		virtual void Reset() = 0;
 		virtual void Dispose() = 0;
 
@@ -82,6 +82,10 @@ namespace RLL
 		virtual void Reset() = 0;
 		virtual ISVG* Commit() = 0;
 		virtual void Dispose() = 0;
+	};
+	class IAVGBuilder : public IBase
+	{
+
 	};
 	class IGeometry : public IBase
 	{
@@ -100,11 +104,11 @@ namespace RLL
 	class IPaintDevice :public RLL::IBase
 	{
 	public:
-		virtual IBrush* CreateSolidColorBrush(Color c) = 0;
-		virtual IBrush* CreateDirectionalBrush(Math3D::Vector2 direction, ColorGradient* grad) = 0;
-		virtual IBrush* CreateRadialBrush(Math3D::Vector2 center, float radius, ColorGradient* grad) = 0;
-		virtual IBrush* CreateSweepBrush(Math3D::Vector2 center, float degree, ColorGradient* grad) = 0;
-		virtual IBrush* CreateTexturedBrush(ITexture* tex, void* sampleMode) = 0;
+		virtual IBrush* CreateSolidColorBrush(Color c, Matrix3x2* transform = nullptr) = 0;
+		virtual IBrush* CreateDirectionalBrush(Math3D::Vector2 direction, ColorGradient* grad, Matrix3x2* transform = nullptr) = 0;
+		virtual IBrush* CreateRadialBrush(Math3D::Vector2 center, float radius, ColorGradient* grad, Matrix3x2* transform = nullptr) = 0;
+		virtual IBrush* CreateSweepBrush(Math3D::Vector2 center, float degree, ColorGradient* grad, Matrix3x2* transform = nullptr) = 0;
+		virtual IBrush* CreateTexturedBrush(ITexture* tex, void* sampleMode, Matrix3x2* transform = nullptr) = 0;
 		virtual ITexture* CreateTexture() = 0;
 		virtual ITexture* CreateTexture(RLL::IBitmap* bitmap) = 0;
 		virtual IRenderTarget* CreateRenderTarget() = 0;
@@ -136,8 +140,11 @@ namespace RLL
 		virtual void SetTransform(Math3D::Matrix4x4& tfCache) = 0;
 		virtual void DrawSVG(ISVG* svg) = 0;
 		virtual void DrawMorph() = 0;
+		//virtual void FillGeometry(IGeometry* geom, IBrush* br) = 0;
 		virtual void Flush() = 0;
 		//virtual void DrawGeometry(IGeometry* geom) = 0;
 
 	};
 }
+
+float TimeSecond();
