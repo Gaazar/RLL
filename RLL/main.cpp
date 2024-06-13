@@ -39,7 +39,7 @@ int main()
 
 	int c;
 #ifdef _DEBUG
-	LoadLibrary(L"C:\\Program Files\\Microsoft PIX\\2201.24\\WinPixGpuCapturer.dll");
+	LoadLibrary(L"C:\\Program Files\\Microsoft PIX\\2405.15.002-OneBranch_release\\WinPixGpuCapturer.dll");
 #endif
 	RLL::Initiate(INIT_DIRECTX_DEBUG_LAYER);
 
