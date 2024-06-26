@@ -4,3 +4,5 @@
 ![image](https://github.com/Gaazar/RLL/blob/main/readme/1.png)
 ![image](https://github.com/Gaazar/RLL/blob/main/readme/2.png)
 ![image](https://github.com/Gaazar/RLL/blob/main/readme/3.png)
+![image](https://github.com/Gaazar/RLL/blob/main/readme/4.png)
+![image](https://github.com/Gaazar/RLL/blob/main/readme/5.png)
