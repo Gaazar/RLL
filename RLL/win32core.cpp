@@ -116,11 +116,11 @@ Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 
 	auto ffact = RLL::CreateFontFactory(paintDevice);
 	auto fc_tms = ffact->LoadFromFile("c:/windows/fonts/times.ttf");
-	auto fc_rob = ffact->LoadFromFile("D:/Download/Roboto/Roboto-Regular.ttf");
-	auto fc_dsm = ffact->LoadFromFile("C:/Users/GazaKeb/AppData/Local/Microsoft/Windows/Fonts/DroidSansMono.ttf");
+	auto fc_rob = ffact->LoadFromFile("c:/windows/fonts/Roboto-Regular.ttf");
+	auto fc_dsm = ffact->LoadFromFile("c:/windows/fonts/DroidSansMono.ttf");
 	auto fc_msyh = ffact->LoadFromFile("c:/windows/fonts/msyh.ttc");
 	auto fc_emj = ffact->LoadFromFile("c:/windows/fonts/seguiemj.ttf");
-	auto fc_khm = ffact->LoadFromFile("F:/libs/harfbuzz-5.3.1/test/subset/data/fonts/Khmer.ttf");
+	auto fc_khm = ffact->LoadFromFile("c:/windows/fonts/Khmer.ttf");
 	auto fc_sun = ffact->LoadFromFile("c:/windows/fonts/simsun.ttc");
 	auto fc_fsun = ffact->LoadFromFile("c:/windows/fonts/simfang.TTF");
 	auto fc_arial = ffact->LoadFromFile("c:/windows/fonts/arial.ttf");

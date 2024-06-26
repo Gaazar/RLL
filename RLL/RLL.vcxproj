@@ -80,13 +80,13 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(INCLUDE);$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>$(LIBPATH);F:\libs\debug;$(LIBRARY);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LIBRARYD);$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(INCLUDE);F:\libs\Sharp\include;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\libs\release;$(LIBPATH);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LIBRARY);$(LibraryPath)</LibraryPath>
     <SourcePath>F:\libs\Sharp\src;$(SourcePath)</SourcePath>
     <ExecutablePath>F:\libs\bin64;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
