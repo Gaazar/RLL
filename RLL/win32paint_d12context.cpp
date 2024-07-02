@@ -109,13 +109,13 @@ void D3D12PaintContext::DrawSVG(RLL::ISVG* svg)
 	auto s = dynamic_cast<D3D12SVG*>(svg);
 	if (!s) { SetError("Input svg is not created by this context's device."); return; }
 	auto m = s->mesh;
-	cmdList->SetPipelineState(device->corePSO.Get());
+	//cmdList->SetPipelineState(device->corePSO.Get());
 	cmdList->IASetIndexBuffer(&m->ibv);
 	cmdList->IASetVertexBuffers(0, 4, m->vbv);
 
 	cmdList->DrawIndexedInstanced(m->idxCount, 1, 0, 0, 0);
-	cmdList->SetPipelineState(device->dbgWirePSO.Get());
-	cmdList->DrawIndexedInstanced(m->idxCount, 1, 0, 0, 0);
+	//cmdList->SetPipelineState(device->dbgWirePSO.Get());
+	//cmdList->DrawIndexedInstanced(m->idxCount, 1, 0, 0, 0);
 
 } 
 

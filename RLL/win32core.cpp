@@ -163,30 +163,30 @@ Français Abc defgh a123c 1.2f.\
  Olá do Cohere! Крупнокалиберный Переполох. ให้เคอรี่มาส่งได้บ่? RLO‮fdp.exe‬PDF,LRO‭|اللغة العربية/‬PDF\
 微笑世界•处处D\
 微笑世界·处处D"
-		, { 330,50 }, fs_df);
+, { 330,50 }, fs_df);
 	//tl->Break();//TextLayout文本布局。Abc defgh a123c 1.234ff. nbsp left. done? emj😎🧑🏿🧑🏿
 	//tl->Metrics();
 	cm_t_tly = tl->Commit(paintDevice);
 	wchar_t* khm = L"אָלֶף־בֵּית";
 
 	sb = paintDevice->CreateSVGBuilder();
-	auto svg_sb = (D3D12SVG*)hb_test(fc_rob, sb, L"Roboto Regular. AWAVfifiifjflft. 中字默。abcDT");
+	ISVG* svg_sb = fc_rob ? (D3D12SVG*)hb_test(fc_rob, sb, L"Roboto Regular. AWAVfifiifjflft. 中字默。abcDT") : nullptr;
 	sb->Reset();
-	auto svg_sbt = (D3D12SVG*)hb_test(fc_tms, sb, L"Times New Roman. AWAVfifiifjflftfL. 中字默。abcDT nbsp 1 km/h RLO‮fdp.exe‬LRO");
+	ISVG* svg_sbt = fc_tms ? (D3D12SVG*)hb_test(fc_tms, sb, L"Times New Roman. AWAVfifiifjflftfL. 中字默。abcDT nbsp 1 km/h RLO‮fdp.exe‬LRO") : nullptr;
 	sb->Reset();
-	auto svg_sbk = (D3D12SVG*)hb_test(fc_khm, sb, L"ញុំបានមើ khmer");//ញុំបានមើ khmer
+	ISVG* svg_sbk = fc_khm ? (D3D12SVG*)hb_test(fc_khm, sb, L"ញុំបានមើ khmer") : nullptr;//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbc = (D3D12SVG*)hb_test(fc_msyh, sb, L"雅黑。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫");//ញុំបានមើ khmer
+	ISVG* svg_sbc = fc_msyh ? (D3D12SVG*)hb_test(fc_msyh, sb, L"雅黑。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫") : nullptr;//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbcs = (D3D12SVG*)hb_test(fc_sun, sb, L"宋体。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫");//ញុំបានមើ khmer
+	ISVG* svg_sbcs = fc_sun ? (D3D12SVG*)hb_test(fc_sun, sb, L"宋体。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫") : nullptr;//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_sbcfs = (D3D12SVG*)hb_test(fc_fsun, sb, L"仿宋。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫");//ញុំបានមើ khmer
+	ISVG* svg_sbcfs = fc_fsun ? (D3D12SVG*)hb_test(fc_fsun, sb, L"仿宋。这次职业生涯规划生涯人物访谈，中字默一（十）川(abc)七abc八123abc毫") : nullptr;//ញុំបានមើ khmer
 	sb->Reset();
-	auto svg_dsm = (D3D12SVG*)hb_test(fc_dsm, sb, L"Latin series TrueType DroidSansMono.");
+	ISVG* svg_dsm = fc_dsm ? (D3D12SVG*)hb_test(fc_dsm, sb, L"Latin series TrueType DroidSansMono.") : nullptr;
 	sb->Reset();
-	auto svg_heb = (D3D12SVG*)hb_test(fc_arial, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية, All 12pt");
+	ISVG* svg_heb = fc_arial ? (D3D12SVG*)hb_test(fc_arial, sb, L"Hebrew: אָלֶף־בֵּית עִבְרִי, Arabic: اللغة العربية, All 12pt") : nullptr;
 	sb->Reset();
-	auto svg_emj = (D3D12SVG*)hb_test(fc_emj, sb, L"🧑🧑🏻🧑🏼🧑🏽🧑🏾🧑🏿🥵😰");
+	ISVG* svg_emj = fc_emj ? (D3D12SVG*)hb_test(fc_emj, sb, L"🧑🧑🏻🧑🏼🧑🏽🧑🏾🧑🏿🥵😰") : nullptr;
 
 	sb->Reset();
 	sb->Push(go);
@@ -196,15 +196,15 @@ Français Abc defgh a123c 1.2f.\
 	sb->Push(glf_clr, &Matrix4x4::Translation(Vector3(2, 0, 0) * 1.2));
 	glf_clr = fc_emj->GetGlyph(U'😍');
 	sb->Push(glf_clr, &Matrix4x4::Translation(Vector3(3, 0, 0) * 1.2));
-	sb->Push(svg_sb, &Matrix4x4::Translation(Vector3(0, 2, 0) * 1.2));
-	sb->Push(svg_sbt, &Matrix4x4::Translation(Vector3(0, 3, 0) * 1.2));
-	sb->Push(svg_sbk, &Matrix4x4::Translation(Vector3(0, 4, 0) * 1.2));
-	sb->Push(svg_sbc, &Matrix4x4::Translation(Vector3(0, 6, 0) * 1.2));
-	sb->Push(svg_sbcs, &Matrix4x4::Translation(Vector3(0, 7, 0) * 1.2));
-	sb->Push(svg_sbcfs, &Matrix4x4::Translation(Vector3(0, 8, 0) * 1.2));
-	sb->Push(svg_dsm, &Matrix4x4::Translation(Vector3(0, 9, 0) * 1.2));
-	sb->Push(svg_heb, &Matrix4x4::Translation(Vector3(0, 10, 0) * 1.2));
-	sb->Push(svg_emj, &Matrix4x4::Translation(Vector3(0, 11, 0) * 1.2));
+	if(svg_sb) sb->Push(svg_sb, &Matrix4x4::Translation(Vector3(0, 2, 0) * 1.2));
+	if (svg_sbt)sb->Push(svg_sbt, &Matrix4x4::Translation(Vector3(0, 3, 0) * 1.2));
+	if (svg_sbk)sb->Push(svg_sbk, &Matrix4x4::Translation(Vector3(0, 4, 0) * 1.2));
+	if (svg_sbc)sb->Push(svg_sbc, &Matrix4x4::Translation(Vector3(0, 6, 0) * 1.2));
+	if (svg_sbcs)sb->Push(svg_sbcs, &Matrix4x4::Translation(Vector3(0, 7, 0) * 1.2));
+	if (svg_sbcfs)sb->Push(svg_sbcfs, &Matrix4x4::Translation(Vector3(0, 8, 0) * 1.2));
+	if (svg_dsm)sb->Push(svg_dsm, &Matrix4x4::Translation(Vector3(0, 9, 0) * 1.2));
+	if (svg_heb)sb->Push(svg_heb, &Matrix4x4::Translation(Vector3(0, 10, 0) * 1.2));
+	if (svg_emj)sb->Push(svg_emj, &Matrix4x4::Translation(Vector3(0, 11, 0) * 1.2));
 	cm_t_glfs = sb->Commit();
 	//cm_t_glfs = svg_sb->mesh;
 	gb->Reset();
@@ -362,9 +362,9 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_MBUTTONUP:
 		//case WM_SETCURSOR:
 	{
-		if(msg == WM_MBUTTONUP)
+		if (msg == WM_MBUTTONUP)
 			_DBG_D3DLIVE_OBJ();
-		
+
 		//WndProc(hwnd, WM_MOUSEMOVE, wp, lp);
 		Vector2 mouse{ GET_X_LPARAM(lp) / dpiScaleFactor.x,GET_Y_LPARAM(lp) / dpiScaleFactor.y };
 		POINT cm;

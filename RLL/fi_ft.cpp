@@ -119,6 +119,7 @@ RLL::IFontFace* FTFactory::LoadFromFile(char* path)
 	{
 		delete fc;
 		SetError("Load font file error.");
+		std::cout << "Font file " << path << " no found." << std::endl;
 		return nullptr;
 	}
 	fc->Load();
