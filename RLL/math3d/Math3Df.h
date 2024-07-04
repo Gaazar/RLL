@@ -36,7 +36,7 @@ namespace Math3D
 		return r;
 	}
 	struct Matrix4x4;
-	typedef float Vector;
+	typedef float Vector1;
 	struct Vector2
 	{
 	public:

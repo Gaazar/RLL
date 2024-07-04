@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(INCLUDE);$(IncludePath)</IncludePath>
+    <IncludePath>F:\libs\include;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(LIBRARYD);$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
@@ -127,8 +127,9 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>F:\libs\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -149,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Git\win32-window-custom-titlebar-main\main.c" />
     <ClCompile Include="BlockLayout.cpp" />
     <ClCompile Include="FontStack.cpp" />
     <ClCompile Include="TextLayout.cpp" />
@@ -156,6 +158,7 @@
     <ClCompile Include="win32paint_d12device.cpp" />
     <ClCompile Include="win32paint_d12geometry.cpp" />
     <ClCompile Include="win32paint_d12svg.cpp" />
+    <ClInclude Include="Alias.h" />
     <ClInclude Include="curve_tools.h" />
     <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="fi_ft.cpp" />
@@ -169,6 +172,7 @@
     <ClInclude Include="delegate.h" />
     <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="fi_ft.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="perf_util.h" />
     <ClInclude Include="reactive.h" />
     <ClInclude Include="TextInterfaces.h" />

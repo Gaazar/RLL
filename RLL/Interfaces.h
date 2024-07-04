@@ -4,8 +4,17 @@
 
 #include <iostream>
 #include <vector>
+#include <atomic>
 namespace RLL
 {
+	template <typename _T>
+	using Vector = std::vector<_T>;
+
+	template <typename _T>
+	using Atomic = std::atomic<_T>;
+
+	using String = std::string;
+
 	enum EVENT_TYPE
 	{
 		EVENT_TYPE_MOUSE_MOVE,
@@ -132,34 +141,6 @@ namespace RLL
 		virtual void Run() = 0;
 	};
 
-	class IBase
-	{
-		int _ref_count = 0;
-		virtual void Dispose() = 0;
-		char* error = nullptr;
-	protected:
-		void SetError(char* e)
-		{
-			error = e;
-			std::cout << this << ":\t" << error << std::endl;
-		};
-	public:
-		void Aquire() { AddRef(); }
-		void AddRef()
-		{
-			_ref_count++;
-		}
-		void Release()
-		{
-			_ref_count--;
-			if (_ref_count < 0)
-			{
-				//std::cout << "Counter Dispose:\t" << this << std::endl;
-				Dispose();
-			}
-		}
-		char* GetLastError() { return error; };
-	};
 	struct FlowOut
 	{
 		RLL::Size size;

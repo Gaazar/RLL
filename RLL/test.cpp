@@ -5,7 +5,6 @@
 #include "harfbuzz/hb-ft.h"
 #include "harfbuzz/hb-icu.h"
 
-#include "unicode/msvclib.h"
 #include "unicode/ucnv.h"
 #include "unicode/ubidi.h"
 #include "unicode/ustring.h"
@@ -16,6 +15,13 @@
 
 #pragma comment(lib, "harfbuzz.lib")
 #pragma comment(lib, "harfbuzz-icu.lib")
+
+#pragma comment(lib, "icuuc.lib")
+#pragma comment(lib, "icutu.lib")
+#pragma comment(lib, "icuio.lib")
+#pragma comment(lib, "icuin.lib")
+#pragma comment(lib, "icudt.lib")
+
 
 using namespace Math3D;
 using namespace RLL;

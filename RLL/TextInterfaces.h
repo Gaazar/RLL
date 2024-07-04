@@ -9,14 +9,14 @@ namespace RLL
 {
 	void TextLayoutInit();
 	class IFontFace;
-	class IFontFactory : public IBase
+	class IFontFactory : public Object
 	{
 	public:
 		virtual IFontFace* LoadFromFile(char*) = 0;
 		virtual void Dispose() = 0;
 	};
 
-	class IFontFace : public IBase
+	class IFontFace : public Object
 	{
 	public:
 		virtual void SetLevel() { NOIMPL; };
@@ -50,7 +50,7 @@ namespace RLL
 
 	IFontFactory* CreateFontFactory(IPaintDevice*);
 
-	class ITextLayout :public IBase
+	class ITextLayout :public Object
 	{
 	public:
 		virtual void AppendText(char* text) = 0;
@@ -60,7 +60,7 @@ namespace RLL
 
 	};
 
-	class TextLayout :public IBase
+	class TextLayout :public Object
 	{
 	private:
 		template<typename T>

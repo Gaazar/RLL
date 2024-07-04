@@ -3,7 +3,7 @@
 #include "Interfaces.h"
 namespace RLL
 {
-	class ITexture : public IBase
+	class ITexture : public Object
 	{
 		virtual SizeI GetSize() = 0;
 		virtual void Dispose() = 0;
@@ -39,7 +39,7 @@ namespace RLL
 		CAP_TYPE cap = CAP_TYPE::NONE;
 		float length = 10;
 	};
-	class IBrush : public IBase
+	class IBrush : public Object
 	{
 	public:
 		virtual void Dispose() = 0;
@@ -47,7 +47,7 @@ namespace RLL
 	};
 	class IGeometry;
 	class ISVG;
-	class IBitmap :public RLL::IBase
+	class IBitmap :public RLL::Object
 	{
 	public:
 		void Dispose() { NOIMPL; };
@@ -55,7 +55,7 @@ namespace RLL
 
 
 	};
-	class IGeometryBuilder : public IBase
+	class IGeometryBuilder : public Object
 	{
 	public:
 		virtual void Begin(Math3D::Vector2 p) = 0;
@@ -74,7 +74,7 @@ namespace RLL
 		virtual void Dispose() = 0;
 
 	};
-	class ISVGBuilder : public IBase
+	class ISVGBuilder : public Object
 	{
 	public:
 		virtual void Push(IGeometry* geom, IBrush* brush = nullptr, Math3D::Matrix4x4* transform = nullptr) = 0;
@@ -83,21 +83,21 @@ namespace RLL
 		virtual ISVG* Commit() = 0;
 		virtual void Dispose() = 0;
 	};
-	class IGeometry : public IBase
+	class IGeometry : public Object
 	{
 		virtual void Dispose() = 0;
 
 	};
-	class ISVG : public IBase
+	class ISVG : public Object
 	{
 		virtual void Dispose() = 0;
 	};
-	class IAVG : public IBase
+	class IAVG : public Object
 	{
 		virtual void Dispose() = 0;
 	};
 	class IPaintContext;
-	class IPaintDevice :public RLL::IBase
+	class IPaintDevice :public RLL::Object
 	{
 	public:
 		virtual IBrush* CreateSolidColorBrush(Color c) = 0;
@@ -121,7 +121,7 @@ namespace RLL
 		//virtual void Flush() = 0;
 		//virtual void ResizeView(SizeI& r) = 0;
 	};
-	class IPaintContext : public IBase
+	class IPaintContext : public Object
 	{
 		virtual void Dispose() = 0;
 	public:

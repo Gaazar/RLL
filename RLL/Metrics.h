@@ -1,5 +1,8 @@
 #pragma once
 #include "math3d/Math3Df.h"
+
+#include "Object.h"
+
 #ifdef _DEBUG
 #define NOIMPL std::cout <<"[NOIMPL]\t"<< __FILE__ << "\tline:" << __LINE__ << "\t" << __FUNCTION__ << " not implemented yet." << std::endl;
 #else
@@ -10,6 +13,7 @@
 #pragma warning(disable:4244)
 namespace RLL
 {
+	using namespace Gz;
 	enum SIZE_MODE {
 		SIZE_MODE_CONTENT,	//size is calculated by inside content
 		SIZE_MODE_FIXED,	//by given metrics
@@ -180,7 +184,7 @@ namespace RLL
 		}
 	};
 
-	struct Color : public Math3D::Quaternion
+	struct Color : private Math3D::Quaternion
 	{
 		void SetOpacity(float opacity)
 		{

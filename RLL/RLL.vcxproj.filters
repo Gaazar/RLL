@@ -73,6 +73,9 @@
     <ClCompile Include="BlockLayout.cpp">
       <Filter>src\shared</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\Git\win32-window-custom-titlebar-main\main.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Metrics.h">
@@ -139,6 +142,12 @@
       <Filter>src\include</Filter>
     </ClInclude>
     <ClInclude Include="delegate.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Alias.h">
       <Filter>src\include</Filter>
     </ClInclude>
   </ItemGroup>

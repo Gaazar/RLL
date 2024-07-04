@@ -23,7 +23,7 @@ RLL::ISVGBuilder* sb;
 RLL::IGeometryBuilder* gb;
 UINT m4xMsaaQuality;
 Vector2 cam_t = { 0,0 };
-Vector cam_s = 1;
+Vector1 cam_s = 1;
 Vector2 cam_md = { -1,0 };
 Matrix4x4 vtf;
 
@@ -196,7 +196,7 @@ Français Abc defgh a123c 1.2f.\
 	sb->Push(glf_clr, &Matrix4x4::Translation(Vector3(2, 0, 0) * 1.2));
 	glf_clr = fc_emj->GetGlyph(U'😍');
 	sb->Push(glf_clr, &Matrix4x4::Translation(Vector3(3, 0, 0) * 1.2));
-	if(svg_sb) sb->Push(svg_sb, &Matrix4x4::Translation(Vector3(0, 2, 0) * 1.2));
+	if (svg_sb) sb->Push(svg_sb, &Matrix4x4::Translation(Vector3(0, 2, 0) * 1.2));
 	if (svg_sbt)sb->Push(svg_sbt, &Matrix4x4::Translation(Vector3(0, 3, 0) * 1.2));
 	if (svg_sbk)sb->Push(svg_sbk, &Matrix4x4::Translation(Vector3(0, 4, 0) * 1.2));
 	if (svg_sbc)sb->Push(svg_sbc, &Matrix4x4::Translation(Vector3(0, 6, 0) * 1.2));
@@ -309,6 +309,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		// When we have no border or title bar, we need to perform our
 		// own hit testing to allow resizing and moving.
 	{
+		return DefWindowProc(hwnd, msg, wp, lp);
 		bool nchit = (GET_Y_LPARAM(lp) - this->viewRect.top) < 33;
 		return hit_test(hwnd, POINT{
 			GET_X_LPARAM(lp),
