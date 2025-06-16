@@ -4,12 +4,25 @@
 #include "fi_ft.h"
 #include "rlltest.h"
 #include "TextInterfaces.h"
+#include <vssym32.h>
+
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "uxtheme.lib")
 
 using namespace Math3D;
 using namespace RLL;
 #define ARRLEN(x) (sizeof(x)/sizeof(*x))
 #define SHADER_CORE L"shader\\core.hlsl"
 #define MSAA 0
+
+#ifndef GET_X_PARAM
+#define GET_X_PARAM(lp) ((int)(short)LOWORD(lp))
+#endif
+
+#ifndef GET_Y_PARAM
+#define GET_Y_PARAM(lp) ((int)(short)HIWORD(lp))
+#endif
+
 
 Vector2 dpiScaleFactor = { 1,1 };
 wchar_t locale[LOCALE_NAME_MAX_LENGTH];
@@ -100,13 +113,53 @@ LRESULT Frame::NextProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 }
 Frame::Frame(Frame* parent, Vector2 size, Vector2 pos)
 {
-	HRESULT hr;
 	HWND hWnd_parent = NULL;
 	if (parent)
 		hWnd_parent = parent->hWnd;
-	SIZE scaledsz{ (LONG)(size.x * dpiScaleFactor.x) ,(LONG)(size.y * dpiScaleFactor.x) };
-	POINT posi{ (LONG)pos.x,(LONG)pos.y };
-	hWnd = create_window(hWnd_parent, wndProc, this, scaledsz, posi, extStyles | WS_EX_NOREDIRECTIONBITMAP);
+
+	static const wchar_t* window_class_name = L"WIN32_CONTAINER_WINDOW";
+	WNDCLASSEXW window_class = { 0 };
+	{
+		window_class.cbSize = sizeof(window_class);
+		window_class.lpszClassName = window_class_name;
+		// Set the procedure that will receive window messages (events)
+		window_class.lpfnWndProc = wndProc;
+		// Ask to send WM_PAINT when resizing horizontally and vertically
+		window_class.style = CS_HREDRAW | CS_VREDRAW;
+	}
+	RegisterClassExW(&window_class);
+
+	int window_style
+		= WS_THICKFRAME   // required for a standard resizeable window
+		| WS_SYSMENU      // Explicitly ask for the titlebar to support snapping via Win + ← / Win + →
+		| WS_MAXIMIZEBOX  // Add maximize button to support maximizing via mouse dragging
+		| WS_CAPTION      // to the top of the screen
+		| WS_MINIMIZEBOX  // Add minimize button to support minimizing by clicking on the taskbar icon
+		| WS_POPUP;
+
+	hWnd = CreateWindowExW(
+		WS_EX_APPWINDOW | WS_EX_NOREDIRECTIONBITMAP,
+		window_class_name,
+		L"Win32 Custom Title Bar Example",
+		// The
+		window_style,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		800,
+		600,
+		hWnd_parent,
+		0,
+		0,
+		this
+	);
+
+	//HRESULT hr;
+	//HWND hWnd_parent = NULL;
+	//if (parent)
+	//	hWnd_parent = parent->hWnd;
+	//SIZE scaledsz{ (LONG)(size.x * dpiScaleFactor.x) ,(LONG)(size.y * dpiScaleFactor.x) };
+	//POINT posi{ (LONG)pos.x,(LONG)pos.y };
+	//hWnd = create_window(hWnd_parent, wndProc, this, scaledsz, posi, extStyles | WS_EX_NOREDIRECTIONBITMAP);
 
 	AquireWindowRect();
 
@@ -290,31 +343,130 @@ Français Abc defgh a123c 1.2f.\
 	//rbo_circ.Sync(cbo_t_circ);
 	//rbf_root.Sync(cbf_root);
 }
-LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static bool win32_window_is_maximized(HWND handle)
+{
+	WINDOWPLACEMENT placement = { 0 };
+	placement.length = sizeof(WINDOWPLACEMENT);
+	if (GetWindowPlacement(handle, &placement)) {
+		return placement.showCmd == SW_SHOWMAXIMIZED;
+	}
+	return false;
+}
+
+static int win32_dpi_scale(int value, UINT dpi) {
+	return (int)((float)value * dpi / 96);
+}
+
+// Adopted from:
+// https://github.com/oberth/custom-chrome/blob/master/source/gui/window_helper.hpp#L52-L64
+static RECT win32_titlebar_rect(HWND handle) {
+	SIZE title_bar_size = { 0 };
+	const int top_and_bottom_borders = 2;
+	HTHEME theme = OpenThemeData(handle, L"WINDOW");
+	UINT dpi = GetDpiForWindow(handle);
+	GetThemePartSize(theme, NULL, WP_CAPTION, CS_ACTIVE, NULL, TS_TRUE, &title_bar_size);
+	CloseThemeData(theme);
+
+	int height = win32_dpi_scale(title_bar_size.cy, dpi) + top_and_bottom_borders;
+
+	RECT rect;
+	GetClientRect(handle, &rect);
+	rect.bottom = rect.top + height;
+	return rect;
+}
+
+// Set this to 0 to remove the fake shadow painting
+#define WIN32_FAKE_SHADOW_HEIGHT 1
+// The offset of the 2 rectangles of the maximized window button
+#define WIN32_MAXIMIZED_RECTANGLE_OFFSET 2
+
+static RECT win32_fake_shadow_rect(HWND handle) {
+	RECT rect;
+	GetClientRect(handle, &rect);
+	rect.bottom = rect.top + WIN32_FAKE_SHADOW_HEIGHT;
+	return rect;
+}
+
+LRESULT Frame::WndProc(HWND handle, UINT message, WPARAM w_param, LPARAM l_param)
 {
 
-	switch (msg)
+	switch (message)
 	{
 	case WM_CREATE:
 		//std::cout << "WMC\n";
-		hWnd = hwnd;
-		break;
+		hWnd = handle;
+		SetWindowPos(
+			handle, NULL,
+			0, 0, 0, 0,
+			SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
+		); break;
 	case WM_NCCALCSIZE:
 	{
-		auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);
-		adjust_maximized_client_rect(hwnd, params.rgrc[0]);
+		if (!w_param) return DefWindowProc(handle, message, w_param, l_param);
+		UINT dpi = GetDpiForWindow(handle);
+
+		int frame_x = GetSystemMetricsForDpi(SM_CXFRAME, dpi);
+		int frame_y = GetSystemMetricsForDpi(SM_CYFRAME, dpi);
+		int padding = GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+
+		NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*)l_param;
+		RECT* requested_client_rect = params->rgrc;
+
+		requested_client_rect->right -= frame_x + padding;
+		requested_client_rect->left += frame_x + padding;
+		requested_client_rect->bottom -= frame_y + padding;
+
+		if (win32_window_is_maximized(handle)) {
+			requested_client_rect->top += padding;
+		}
+
 		return 0;
 	}
 	case WM_NCHITTEST:
 		// When we have no border or title bar, we need to perform our
 		// own hit testing to allow resizing and moving.
 	{
-		return DefWindowProc(hwnd, msg, wp, lp);
-		bool nchit = (GET_Y_LPARAM(lp) - this->viewRect.top) < 33;
-		return hit_test(hwnd, POINT{
-			GET_X_LPARAM(lp),
-			GET_Y_LPARAM(lp)
-			}, nchit, true);//!!!!!! TO MODIFY
+		// Let the default procedure handle resizing areas
+		LRESULT hit = DefWindowProc(handle, message, w_param, l_param);
+		switch (hit) {
+		case HTNOWHERE:
+		case HTRIGHT:
+		case HTLEFT:
+		case HTTOPLEFT:
+		case HTTOP:
+		case HTTOPRIGHT:
+		case HTBOTTOMRIGHT:
+		case HTBOTTOM:
+		case HTBOTTOMLEFT: {
+			return hit;
+		}
+		}
+		// Check if hover button is on maximize to support SnapLayout on Windows 11
+		//if (title_bar_hovered_button == CustomTitleBarHoveredButton_Maximize) {
+		//	return HTMAXBUTTON;
+		//}
+
+		// Looks like adjustment happening in NCCALCSIZE is messing with the detection
+		// of the top hit area so manually fixing that.
+		UINT dpi = GetDpiForWindow(handle);
+		int frame_y = GetSystemMetricsForDpi(SM_CYFRAME, dpi);
+		int padding = GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+		POINT cursor_point = { 0 };
+		cursor_point.x = GET_X_PARAM(l_param);
+		cursor_point.y = GET_Y_PARAM(l_param);
+		ScreenToClient(handle, &cursor_point);
+
+		// We should not return HTTOP when hit-testing a maximized window 
+		if (!win32_window_is_maximized(handle) && cursor_point.y > 0 && cursor_point.y < frame_y + padding) {
+			return HTTOP;
+		}
+
+		// Since we are drawing our own caption, this needs to be a custom test
+		if (cursor_point.y < win32_titlebar_rect(handle).bottom) {
+			return HTCAPTION;
+		}
+
+		return HTCLIENT;
 	}
 	break;
 	case WM_NCACTIVATE:
@@ -363,23 +515,23 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_MBUTTONUP:
 		//case WM_SETCURSOR:
 	{
-		if (msg == WM_MBUTTONUP)
+		if (message == WM_MBUTTONUP)
 			_DBG_D3DLIVE_OBJ();
 
 		//WndProc(hwnd, WM_MOUSEMOVE, wp, lp);
-		Vector2 mouse{ GET_X_LPARAM(lp) / dpiScaleFactor.x,GET_Y_LPARAM(lp) / dpiScaleFactor.y };
+		Vector2 mouse{ GET_X_LPARAM(l_param) / dpiScaleFactor.x,GET_Y_LPARAM(l_param) / dpiScaleFactor.y };
 		POINT cm;
 		cm.x = mouse.x * dpiScaleFactor.x;
 		cm.y = mouse.y * dpiScaleFactor.y;
-		if (msg == WM_LBUTTONDOWN)
+		if (message == WM_LBUTTONDOWN)
 		{
 			cam_md = { (float)cm.x,(float)cm.y };
 		}
-		else if (msg == WM_LBUTTONUP)
+		else if (message == WM_LBUTTONUP)
 		{
 			cam_md.x = -1;
 		}
-		else if (msg == WM_MOUSEMOVE && cam_md.x != -1)
+		else if (message == WM_MOUSEMOVE && cam_md.x != -1)
 		{
 			Vector2 mp(cm.x, cm.y);
 			auto d = mp - cam_md;
@@ -388,7 +540,7 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 			vtf = Matrix4x4::TRS({ cam_t.x,cam_t.y,0 }, Quaternion::identity(), { cam_s,cam_s,cam_s });
 			//rbf_root.Sync(cbf_root);
-			PostMessage(hwnd, WM_PAINT, 0, 0);
+			PostMessage(handle, WM_PAINT, 0, 0);
 
 		}
 		//std::cout << cam_md.x << "\t" << cam_s << "\t" << cam_t.x << ", " << cam_t.y << std::endl;
@@ -404,22 +556,22 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		RECT wr;
 		GetWindowRect(hWnd, &wr);
-		POINT mouse{ (GET_X_LPARAM(lp) - wr.left) ,(GET_Y_LPARAM(lp) - wr.top) };
+		POINT mouse{ (GET_X_LPARAM(l_param) - wr.left) ,(GET_Y_LPARAM(l_param) - wr.top) };
 		//WndProc(hwnd, msg + 0x160, wp, mouse.x | (mouse.y << 16));
 		//if (msg == WM_NCLBUTTONDOWN) frame.flags.nclbd = true;
 		break;
 	}
 	case WM_SYSCOMMAND:
 	{
-		if ((wp & SC_MAXIMIZE) || (wp & SC_RESTORE))
+		if ((w_param & SC_MAXIMIZE) || (w_param & SC_RESTORE))
 		{
-			PostMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
-			if ((wp & SC_MAXIMIZE) == SC_MAXIMIZE)
+			PostMessageW(handle, WM_EXITSIZEMOVE, 0, 0);
+			if ((w_param & SC_MAXIMIZE) == SC_MAXIMIZE)
 			{
 				//frame.flags.maximized = true;
 				//frame.View::Position();
 			}
-			if ((wp & SC_RESTORE) == SC_RESTORE)
+			if ((w_param & SC_RESTORE) == SC_RESTORE)
 			{
 				//frame.flags.maximized = false;
 				//frame.View::Position();
@@ -429,15 +581,15 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	}
 	case WM_MOUSEWHEEL:
 	{
-		auto dta = GET_WHEEL_DELTA_WPARAM(wp);
+		auto dta = GET_WHEEL_DELTA_WPARAM(w_param);
 		float ds = (1 + (float)dta / 120 * 0.1f);
-		Vector2 mouse{ GET_X_LPARAM(lp) / dpiScaleFactor.x,GET_Y_LPARAM(lp) / dpiScaleFactor.y };
+		Vector2 mouse{ GET_X_LPARAM(l_param) / dpiScaleFactor.x,GET_Y_LPARAM(l_param) / dpiScaleFactor.y };
 		cam_s *= ds;
 		vtf = Matrix4x4::TRS({ cam_t.x,cam_t.y,0 }, Quaternion::identity(), { cam_s,cam_s,cam_s });
 
 		//rbf_root.Sync(cbf_root);
 
-		PostMessage(hwnd, WM_PAINT, 0, 0);
+		PostMessage(handle, WM_PAINT, 0, 0);
 	}
 	case WM_CHAR:
 	case WM_KEYDOWN:
@@ -463,19 +615,19 @@ LRESULT Frame::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	}
 	case WM_SETCURSOR:
 	{
-
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
 		break;
 	}
 	case WM_MOVE:
 	case WM_EXITSIZEMOVE:
-		int x = GET_X_LPARAM(lp);
-		int y = GET_Y_LPARAM(lp);
+		int x = GET_X_LPARAM(l_param);
+		int y = GET_Y_LPARAM(l_param);
 		AquireWindowRect();
 
 		break;
 
 	}
-	return NextProc(hwnd, msg, wp, lp);
+	return NextProc(handle, message, w_param, l_param);
 }
 void Frame::Show()
 {

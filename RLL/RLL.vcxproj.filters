@@ -73,7 +73,7 @@
     <ClCompile Include="BlockLayout.cpp">
       <Filter>src\shared</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Git\win32-window-custom-titlebar-main\main.c">
+    <ClCompile Include="..\..\..\..\Git\win32-window-custom-titlebar-main\nomain.cxx">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
